@@ -85,6 +85,7 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; }
 .giant { margin: 0 0 34px; font-size: clamp(64px, 13vw, 190px); line-height: .92; font-weight: 800; letter-spacing: -.035em; }
 .giant .word { display: inline-block; }
 .giant .thin { font-weight: 300; color: var(--pink); }
+.giant.hero { font-size: clamp(52px, 9.2vw, 136px); line-height: .95; }
 .display { margin: 0 0 26px; font-size: clamp(44px, 6.4vw, 92px); line-height: 1; font-weight: 800; letter-spacing: -.03em; }
 .display em { font-style: italic; font-weight: 400; color: var(--yellow); }
 .lede { max-width: 640px; margin: 0 0 18px; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.5; color: var(--secondary); font-weight: 500; }

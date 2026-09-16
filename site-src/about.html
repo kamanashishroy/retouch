@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>About · Retouch</title>
+<meta name="description" content="Retouch is made by Kamanashish Roy. Why it exists, what it refuses to do, and where to find him.">
+<meta name="theme-color" content="#0b0b0d">
+<meta property="og:title" content="About Retouch">
+<meta property="og:description" content="A pencil for the HTML your AI wrote. Made by Kamanashish Roy.">
+<meta property="og:url" content="https://fastretouch.com/about.html">
+<meta property="og:image" content="https://fastretouch.com/icons/128.png">
+<link rel="icon" href="icons/32.png" type="image/png">
+<link rel="stylesheet" href="welcome.css">
+<style>
+  .page { position: relative; z-index: 1; width: min(880px, 100% - 56px); margin: 0 auto; padding: 150px 0 120px; }
+  .page section { margin: 0 0 96px; }
+  .page section > * { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--ease), transform .8s var(--ease); }
+  .page section.in > * { opacity: 1; transform: none; }
+  .page section.in > *:nth-child(2) { transition-delay: .08s; } .page section.in > *:nth-child(3) { transition-delay: .16s; } .page section.in > *:nth-child(4) { transition-delay: .24s; }
+  .about-hero .giant { font-size: clamp(52px, 9.2vw, 136px); line-height: .95; }
+  .who { display: grid; grid-template-columns: 180px 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 720px) { .who { grid-template-columns: 1fr; } }
+  .portrait { width: 180px; height: 180px; border-radius: 40px; background: linear-gradient(135deg, var(--purple), var(--pink) 55%, var(--yellow)); display: grid; place-items: center; font-weight: 800; font-size: 64px; color: #0b0b0d; letter-spacing: -.04em; box-shadow: 0 24px 60px rgba(0,0,0,.4); }
+  .who h2 { margin: 0 0 8px; font-size: 34px; letter-spacing: -.02em; }
+  .who .role { margin: 0 0 18px; color: var(--pink); font-weight: 600; }
+  .who p { color: var(--secondary); font-size: 18px; margin: 0 0 14px; }
+  .who p b { color: var(--fg); }
+  .q { font-size: clamp(26px, 3.4vw, 40px); line-height: 1.2; font-weight: 300; letter-spacing: -.01em; margin: 0 0 22px; color: var(--fg); }
+  .q em { font-style: italic; color: var(--yellow); }
+  .body p { color: var(--secondary); font-size: 18px; line-height: 1.6; max-width: 680px; margin: 0 0 16px; }
+  .body p b { color: var(--fg); }
+  .rules { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
+  .rules li { padding: 18px 22px; border-radius: 18px; background: var(--glass); border: 1px solid var(--border); color: var(--secondary); font-size: 17px; display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; }
+  .rules li b { color: var(--fg); display: block; margin-bottom: 2px; }
+  .rules .n { width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #0b0b0d; font-weight: 800; font-size: 13px; display: grid; place-items: center; margin-top: 2px; }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .links a { text-decoration: none; }
+  .foot { color: var(--secondary); font-size: 14px; margin-top: 40px; }
+  .foot a { color: var(--secondary); } .foot a:hover { color: var(--fg); }
+  .editnote { margin-top: 18px; padding: 14px 18px; border-radius: 14px; border: 1px dashed var(--border); color: var(--secondary); font-size: 14px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/"><img src="icons/icon.svg" alt=""><span class="lockup"><span class="fast">fast</span><span class="re">retouch</span></span></a>
+  <nav class="topnav">
+    <a href="/#setup">Set up</a>
+    <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+    <a class="pill primary small" href="https://github.com/kamanashishroy/retouch/releases/latest" target="_blank" rel="noopener">Install</a>
+  </nav>
+</header>
+
+<main class="page">
+  <section class="about-hero in">
+    <p class="eyebrow">About</p>
+    <h1 class="giant"><span class="word">Made by</span><br><span class="word thin">someone who reads.</span></h1>
+    <p class="lede">Retouch exists because a marketer kept getting beautiful pages from an AI and could not fix a single word in them without asking again.</p>
+  </section>
+
+  <section class="who">
+    <div class="portrait" aria-hidden="true">R</div>
+    <div>
+      <h2>Kamanashish Roy</h2>
+      <p class="role">Founder of Wozku · creator of Advocacy-Led Growth · @doubts</p>
+      <p>Roy coined <b>Advocacy-Led Growth</b> in 2024 after noticing the same pattern everywhere: every event, certification and onboarding produces a moment where people want to share, and most companies miss it. He turned the pattern into a framework, built in the open, and founded <b>Wozku</b>, the first platform made for teams that run on it.</p>
+      <p>He wanted to be a poet. He builds platforms for ideas instead, and keeps a room for the ideas that don't fit at <a href="https://doubts.page" target="_blank" rel="noopener">doubts.page</a>.</p>
+      <div class="links">
+        <a class="pill small" href="https://www.linkedin.com/in/doubts/" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="pill small" href="https://x.com/doubts" target="_blank" rel="noopener">X · @doubts</a>
+        <a class="pill small" href="https://advocacyled.com" target="_blank" rel="noopener">advocacyled.com</a>
+        <a class="pill small" href="https://advocacyled.substack.com" target="_blank" rel="noopener">Newsletter</a>
+        <a class="pill small" href="mailto:hello@fastretouch.com">hello@fastretouch.com</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="body">
+    <p class="eyebrow">Why this exists</p>
+    <p class="q">Why does every new medium start by imitating the one it was supposed to replace? <em>AI writes web pages, and we read them like paper.</em></p>
+    <p>Markdown has Obsidian: you read it and you edit it in the same place. HTML, the format every AI reaches for when it wants to show you something, has a browser tab. You can look. You cannot touch. A wrong number in a report means another prompt, another wait, and a new file that may have changed three other things while it was at it.</p>
+    <p>That is not an editing problem. It is a <b>distribution</b> problem, the same one Roy works on at Wozku: the moment someone wants to change or share what is in front of them, the tool should get out of the way. Retouch is that idea applied to a single file on your own disk.</p>
+    <p>It was built quickly, with an AI in the loop, on the pages it was meant to fix. That seemed like the only honest way to make it.</p>
+  </section>
+
+  <section class="body">
+    <p class="eyebrow">What it refuses to do</p>
+    <p class="q">A tool that writes to your files earns trust by what it <em>won't</em> touch.</p>
+    <ul class="rules">
+      <li><span class="n">1</span><div><b>Nothing leaves your machine.</b> No server, no account, no upload, no analytics. The extension asks for the minimum Chrome permits and nothing else.</div></li>
+      <li><span class="n">2</span><div><b>Byte for byte.</b> Only the text you changed is rewritten. Spacing, comments and scripts stay exactly as your AI left them.</div></li>
+      <li><span class="n">3</span><div><b>Only what the page already knows.</b> Colors, fonts and styles come from the page's own stylesheet, described in plain words. Nothing is invented, so nothing looks pasted in.</div></li>
+      <li><span class="n">4</span><div><b>Honest about scripts.</b> Text a script generates at load is refused rather than quietly corrupted.</div></li>
+      <li><span class="n">5</span><div><b>Open.</b> MIT licensed. Read it, fork it, keep it.</div></li>
+    </ul>
+  </section>
+
+  <section class="body">
+    <p class="eyebrow">Say hello</p>
+    <p class="q">Found a page it can't fix? <em>Send it.</em></p>
+    <p>Bugs, odd pages and ideas go to <a href="mailto:hello@fastretouch.com">hello@fastretouch.com</a> or the <a href="https://github.com/kamanashishroy/retouch/issues" target="_blank" rel="noopener">issue tracker</a>. The stranger who tried it first jumped. That's the bar.</p>
+    <p class="foot"><a href="/">fastretouch.com</a> · <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">GitHub</a> · <a href="https://doubts.page" target="_blank" rel="noopener">doubts.page</a> · <a href="https://advocacyled.com" target="_blank" rel="noopener">advocacyled.com</a></p>
+  </section>
+</main>
+<script>
+  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) e.target.classList.add('in'); }, { threshold: .2 });
+  document.querySelectorAll('.page section').forEach((s) => io.observe(s));
+</script>
+</body>
+</html>

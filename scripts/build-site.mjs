@@ -26,6 +26,9 @@ for (const dir of ['icons', 'fonts']) {
   fs.mkdirSync(path.join(out, dir), { recursive: true });
   for (const f of fs.readdirSync(path.join(ext, dir))) fs.copyFileSync(path.join(ext, dir, f), path.join(out, dir, f));
 }
+// Extra site-only pages (about, etc.) live in site-src/ and ship as they are.
+const extra = path.join(root, 'site-src');
+if (fs.existsSync(extra)) for (const f of fs.readdirSync(extra)) fs.copyFileSync(path.join(extra, f), path.join(out, f));
 fs.writeFileSync(path.join(out, 'CNAME'), 'fastretouch.com\n');
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
 console.log('site built:', fs.readdirSync(out).join(', '));
