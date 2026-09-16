@@ -22,7 +22,7 @@
   .about-hero .giant { font-size: clamp(52px, 9.2vw, 136px); line-height: .95; }
   .who { display: grid; grid-template-columns: 180px 1fr; gap: 40px; align-items: start; }
   @media (max-width: 720px) { .who { grid-template-columns: 1fr; } }
-  .portrait { width: 180px; height: 180px; border-radius: 40px; background: linear-gradient(135deg, var(--purple), var(--pink) 55%, var(--yellow)); display: grid; place-items: center; font-weight: 800; font-size: 64px; color: #0b0b0d; letter-spacing: -.04em; box-shadow: 0 24px 60px rgba(0,0,0,.4); }
+  .portrait { width: 180px; height: 180px; border-radius: 40px; object-fit: cover; display: block; box-shadow: 0 24px 60px rgba(0,0,0,.4), 0 0 0 1px var(--border); }
   .who h2 { margin: 0 0 8px; font-size: 34px; letter-spacing: -.02em; }
   .who .role { margin: 0 0 18px; color: var(--pink); font-weight: 600; }
   .who p { color: var(--secondary); font-size: 18px; margin: 0 0 14px; }
@@ -56,11 +56,11 @@
   <section class="about-hero in">
     <p class="eyebrow">About</p>
     <h1 class="giant"><span class="word">Made by</span><br><span class="word thin">someone who reads.</span></h1>
-    <p class="lede">Retouch exists because a marketer kept getting beautiful pages from an AI and could not fix a single word in them without asking again.</p>
+    <p class="lede">Retouch exists because a marketer kept getting beautiful pages from an AI and could not fix a single word in them without asking the AI again, or opening VS Code.</p>
   </section>
 
   <section class="who">
-    <div class="portrait" aria-hidden="true">R</div>
+    <img class="portrait" src="roy.jpg" alt="Kamanashish Roy" width="180" height="180">
     <div>
       <h2>Kamanashish Roy</h2>
       <p class="role">Founder of Wozku · creator of Advocacy-Led Growth · @doubts</p>
