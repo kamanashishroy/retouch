@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your first Retouch page</title>
+<style>
+  :root { --ink: #1b1b1f; --muted: #6b6b73; --paper: #f7f5f2; --card: #ffffff; --line: #e6e1da; --yellow: #f4c05f; --purple: #9a5ca3; --pink: #d9b3e2; --green: #2f9e63; --red: #d64545; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .page { max-width: 860px; margin: 0 auto; padding: 72px 28px 96px; }
+  h1, h2 { font-family: Iowan Old Style, "Palatino Linotype", Georgia, serif; letter-spacing: -.01em; }
+  h1 { font-size: 56px; line-height: 1.02; margin: 0 0 18px; font-weight: 600; }
+  h2 { font-size: 28px; margin: 0 0 8px; font-weight: 600; }
+  .lede { font-size: 21px; color: var(--muted); margin: 0 0 56px; max-width: 640px; }
+  .step { display: grid; grid-template-columns: 56px 1fr; gap: 22px; padding: 30px 0; border-top: 1px solid var(--line); }
+  .num { width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 17px; }
+  .step p { margin: 0 0 12px; }
+  .hint { color: var(--muted); font-size: 15px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 26px; margin-top: 14px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px 22px; }
+  .tile .big { font-size: 40px; font-weight: 700; letter-spacing: -.02em; line-height: 1; margin: 0 0 6px; }
+  .tile .lbl { color: var(--muted); font-size: 14px; margin: 0; }
+  .muted { color: var(--muted); }
+  .highlight { background-color: #fff1c2; }
+  .callout { border-left: 4px solid var(--purple); padding-left: 16px; }
+  .serif { font-family: Iowan Old Style, "Palatino Linotype", Georgia, serif; }
+  .good { color: var(--green); font-weight: 600; }
+  .bad { color: var(--red); font-weight: 600; }
+  .brand { color: var(--purple); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; background: var(--card); border-radius: 18px; overflow: hidden; }
+  th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  th { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  img.hero { display: block; width: 100%; max-width: 420px; border-radius: 18px; border: 1px solid var(--line); }
+  .done { margin-top: 56px; padding: 34px 36px; border-radius: 24px; background: var(--ink); color: #fff; }
+  .done h2 { color: #fff; margin-bottom: 10px; }
+  .done p { margin: 0; color: rgba(255,255,255,.72); }
+  .done .yellow { color: var(--yellow); }
+  footer { margin-top: 40px; color: var(--muted); font-size: 14px; }
+  footer a { color: var(--purple); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Your first Retouch page</h1>
+  <p class="lede">Everything on this page is meant to be changed. Work down the list, watch the counter in the bar, then press Save. Your edits land in this very file.</p>
+
+  <div class="step">
+    <span class="num">1</span>
+    <div>
+      <h2>Fix the typo</h2>
+      <p>Click the sentence, put the cursor on the mistake, and fix it. Press Enter or click elsewhere when you are done.</p>
+      <div class="card"><p>Retouch lets you change the text of any HTML page without touching teh code.</p></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">2</span>
+    <div>
+      <h2>Change a number</h2>
+      <p>Numbers in reports are the thing that is always slightly wrong. Make the growth 21%.</p>
+      <div class="tiles">
+        <div class="tile"><p class="big">18%</p><p class="lbl">Quarter over quarter</p></div>
+        <div class="tile"><p class="big">$1.9M</p><p class="lbl">Pipeline from events</p></div>
+        <div class="tile"><p class="big">42</p><p class="lbl">Opportunities</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">3</span>
+    <div>
+      <h2>Make it bold</h2>
+      <p>Select the words <em>byte for byte</em> below. A small pill appears above them. Press <b>B</b>, or ⌘B.</p>
+      <div class="card"><p>When Retouch saves, everything you did not touch stays byte for byte the same.</p></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">4</span>
+    <div>
+      <h2>Use the page’s own colors</h2>
+      <p>Select a word, open <b>Color</b> in the pill, and pick one. Only colors this page already uses are offered, so nothing looks pasted in. Try <b>Styles</b> too: it lists this page’s classes in plain words.</p>
+      <div class="card"><p class="callout">This sentence is waiting for a splash of color on one word.</p></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">5</span>
+    <div>
+      <h2>Replace the picture</h2>
+      <p>Click the image. Choose <b>Replace image…</b> and pick any picture from your Mac. It is copied next to this file when you save, and only the image’s address changes in the page.</p>
+      <div class="card"><img class="hero" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20320%20200'%3E%3Crect%20width='320'%20height='200'%20rx='18'%20fill='%23efe9f3'/%3E%3Ccircle%20cx='230'%20cy='70'%20r='34'%20fill='%23f4c05f'/%3E%3Cpath%20d='M0%20160%20C60%20110%20110%20130%20160%20120%20S260%2090%20320%20130%20V200%20H0Z'%20fill='%239a5ca3'%20opacity='.85'/%3E%3Cpath%20d='M0%20175%20C70%20140%20140%20165%20200%20150%20S290%20135%20320%20155%20V200%20H0Z'%20fill='%23d9b3e2'/%3E%3C/svg%3E" alt="A placeholder landscape" width="420" height="262"></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">6</span>
+    <div>
+      <h2>Fill the empty cell</h2>
+      <p>Empty cells are editable too. Click into the blank one and type your name.</p>
+      <table>
+        <thead><tr><th>Field</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Editor</td><td>Retouch</td></tr>
+          <tr><td>Your name</td><td></td></tr>
+          <tr><td>Mood</td><td class="good">Curious</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">7</span>
+    <div>
+      <h2>Save</h2>
+      <p>The badge in the bar counts your changes. Press <b>Save</b> or ⌘S. The first time, Retouch asks for the folder this file lives in, so it can write to it. Choose the <b>Retouch</b> folder in Downloads.</p>
+      <p class="hint">Then reload the page. Every edit is still there, because it is in the file now.</p>
+    </div>
+  </div>
+
+  <div class="done">
+    <h2>That is the whole product.</h2>
+    <p>You just edited an HTML file <span class="yellow">without writing a line of code</span>, and the file is exactly as your AI left it except for what you changed. Open any page it made for you and do the same.</p>
+  </div>
+
+  <footer>Retouch is open source under the MIT license. <a href="https://github.com/kamanashishroy/retouch">Read the code</a> · <a href="https://fastretouch.com">fastretouch.com</a>.</footer>
+</div>
+</body>
+</html>

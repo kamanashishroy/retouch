@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<title>Retouch</title>
+<link rel="stylesheet" href="viewer.css">
+</head>
+<body>
+<header id="bar">
+  <a class="lead" href="welcome.html" target="_blank" rel="noopener" title="About Retouch · take the tour">
+    <img class="mark" src="icons/icon.svg" alt="">
+    <span class="app">Retouch</span>
+  </a>
+  <div class="title">
+    <div id="filename" class="name" title=""></div>
+    <div id="status" class="sub">Loading…</div>
+  </div>
+  <div class="actions">
+    <button id="discard" class="btn ghost" hidden>Discard</button>
+    <button id="save" class="btn primary" hidden disabled title="Save (⌘S)">Save<span id="count" class="bubble" hidden aria-live="polite"></span></button>
+    <button id="edit" class="btn primary">Edit</button>
+    <button id="exit" class="close" title="Leave Retouch and show the plain file" aria-label="Leave Retouch">
+      <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+    </button>
+  </div>
+</header>
+<div id="banner" class="banner" hidden>
+  <span id="banner-icon" class="banner-icon" aria-hidden="true">!</span>
+  <span id="banner-text" class="banner-text"></span>
+  <span class="banner-actions">
+    <button id="choose" class="btn small primary" hidden>Choose Folder…</button>
+    <button id="details" class="btn small" hidden>Copy Details</button>
+    <button id="dismiss" class="btn small ghost">Dismiss</button>
+  </span>
+</div>
+<iframe id="frame" title="Local page"></iframe>
+<div id="error" class="error" hidden></div>
+<script src="idb.js"></script>
+<script src="patch.js"></script>
+<script src="vault.js"></script>
+<script src="viewer.js"></script>
+</body>
+</html>

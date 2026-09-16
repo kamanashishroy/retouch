@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Retouch",
+  "version": "0.1.0",
+  "description": "Edit the text of local HTML pages in place and save straight back to the file. Nothing leaves your machine.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "file:///*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Retouch: edit this page"
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "fonts/*.woff2"
+      ],
+      "matches": [
+        "file:///*"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "file:///*"
+      ],
+      "js": [
+        "describe.js",
+        "content.js"
+      ],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "optional_permissions": [
+    "downloads"
+  ]
+}

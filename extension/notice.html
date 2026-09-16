@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<title>Retouch</title>
+<style>
+  @font-face { font-family: Urbanist; src: url(fonts/Urbanist.woff2) format('woff2'); font-weight: 300 800; }
+  :root { color-scheme: light dark; --fg: #f5f5f7; --secondary: rgba(245,245,247,.62); --page: #0b0b0d; --glass: rgba(255,255,255,.08); --border: rgba(255,255,255,.18); --solid: #fff; --solid-fg: #0b0b0d; }
+  @media (prefers-color-scheme: light) { :root { --fg: #1d1d1f; --secondary: rgba(29,29,31,.62); --page: #efe9f3; --glass: rgba(255,255,255,.55); --border: rgba(255,255,255,.75); --solid: #1d1d1f; --solid-fg: #fff; } }
+  html, body { height: 100%; margin: 0; }
+  body { position: relative; overflow: hidden; display: grid; place-items: center; background: var(--page); color: var(--fg);
+    font: 16px/1.5 Urbanist, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body::before { content: ""; position: absolute; inset: -20%; pointer-events: none;
+    background: radial-gradient(40% 50% at 20% 10%, rgba(154,92,163,.6), transparent 70%), radial-gradient(35% 45% at 60% 0%, rgba(217,179,226,.5), transparent 70%), radial-gradient(40% 50% at 90% 20%, rgba(244,192,95,.55), transparent 70%);
+    animation: glow 14s ease-in-out infinite alternate; }
+  @keyframes glow { to { transform: translate3d(2%, 2%, 0) scale(1.05); } }
+  .card { position: relative; width: min(520px, calc(100vw - 40px)); padding: 34px 38px 30px; border-radius: 30px; background: var(--glass); border: 1px solid var(--border);
+    -webkit-backdrop-filter: blur(28px) saturate(160%); backdrop-filter: blur(28px) saturate(160%); box-shadow: 0 24px 70px rgba(0,0,0,.28); animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+  .mark { width: 60px; height: 60px; border-radius: 16px; display: block; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -.2px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--secondary); }
+  ol { list-style: none; padding: 0; margin: 20px 0 6px; counter-reset: s; }
+  li { position: relative; padding-left: 44px; margin: 14px 0; counter-increment: s; }
+  li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--solid); color: var(--solid-fg); font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; background: var(--glass); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; }
+  .ok { color: #7ed491; font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="card">
+  <img class="mark" src="icons/icon.svg" alt="">
+  <div id="body"></div>
+</div>
+<script src="notice.js"></script>
+</body>
+</html>

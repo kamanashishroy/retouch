@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4AA8FF"/>
+      <stop offset="1" stop-color="#0A6BEB"/>
+    </linearGradient>
+    <linearGradient id="pen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFE87A"/>
+      <stop offset="1" stop-color="#FFB800"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bg)"/>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/>
+  <!-- three text lines -->
+  <rect x="28" y="36" width="72" height="9" rx="4.5" fill="#fff" opacity=".95"/>
+  <rect x="28" y="60" width="44" height="9" rx="4.5" fill="#fff" opacity=".95"/>
+  <rect x="28" y="84" width="30" height="9" rx="4.5" fill="#fff" opacity=".95"/>
+  <!-- pencil touching the second line -->
+  <g transform="translate(104 48) rotate(45)">
+    <rect x="-7" y="-2" width="14" height="44" rx="3" fill="url(#pen)"/>
+    <path d="M-7 42 L0 56 L7 42 Z" fill="#F5D0B0"/>
+    <path d="M-2.5 51 L0 56 L2.5 51 Z" fill="#333"/>
+    <rect x="-7" y="-2" width="14" height="8" rx="3" fill="#FF7A59"/>
+  </g>
+</svg>
