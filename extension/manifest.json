@@ -1,13 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Retouch",
-  "version": "0.1.0",
+  "name": "Retouch: fix the HTML your AI wrote",
+  "short_name": "Retouch",
+  "version": "0.2.0",
   "description": "Edit the text of local HTML pages in place and save straight back to the file. Nothing leaves your machine.",
-  "permissions": [
-    "storage"
-  ],
+  "homepage_url": "https://fastretouch.com",
   "host_permissions": [
     "file:///*"
+  ],
+  "optional_permissions": [
+    "downloads"
   ],
   "background": {
     "service_worker": "background.js"
@@ -43,8 +45,5 @@
       "all_frames": true,
       "run_at": "document_idle"
     }
-  ],
-  "optional_permissions": [
-    "downloads"
   ]
 }

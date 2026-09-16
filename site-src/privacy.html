@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Privacy · Retouch</title>
+<meta name="description" content="What Retouch stores, reads and writes, and what it never does. Nothing leaves your machine.">
+<meta name="theme-color" content="#0b0b0d">
+<meta property="og:title" content="Retouch privacy policy">
+<meta property="og:description" content="Retouch reads and writes files on your own disk and nothing else. No server, no account, no analytics.">
+<meta property="og:url" content="https://fastretouch.com/privacy.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retouch">
+<meta property="og:image" content="https://fastretouch.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://fastretouch.com/og.png">
+<link rel="canonical" href="https://fastretouch.com/privacy.html">
+<link rel="icon" href="icons/32.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/128.png">
+<link rel="stylesheet" href="welcome.css">
+<style>
+  .page { position: relative; z-index: 1; width: min(800px, 100% - 56px); margin: 0 auto; padding: 150px 0 120px; }
+  .page section { margin: 0 0 72px; }
+  .privacy-hero .giant { font-size: clamp(52px, 9.2vw, 136px); line-height: .95; }
+  .body h2 { font-size: 28px; letter-spacing: -.02em; margin: 0 0 14px; }
+  .body p, .body li { color: var(--secondary); font-size: 18px; line-height: 1.6; margin: 0 0 14px; }
+  .body p b, .body li b { color: var(--fg); }
+  .body ul { padding-left: 22px; margin: 0 0 14px; }
+  .body li { margin: 0 0 10px; }
+  .body code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 15px; background: var(--glass); border: 1px solid var(--border); padding: 1px 8px; border-radius: 999px; color: var(--fg); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 22px 0 0; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  .grid div { padding: 18px 22px; border-radius: 18px; background: var(--glass); border: 1px solid var(--border); }
+  .grid b { display: block; color: var(--fg); font-size: 17px; margin-bottom: 4px; }
+  .grid span { color: var(--secondary); font-size: 15px; line-height: 1.5; }
+  .grid .no b::before { content: "✕ "; color: var(--pink); }
+  .grid .yes b::before { content: "✓ "; color: var(--yellow); }
+  .meta { color: var(--secondary); font-size: 14px; margin: 0 0 10px; }
+  .foot { color: var(--secondary); font-size: 14px; margin-top: 40px; }
+  .foot a { color: var(--secondary); } .foot a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/"><img src="icons/icon.svg" alt=""><span class="lockup"><span class="fast">fast</span><span class="re">retouch</span></span></a>
+  <nav class="topnav">
+    <a href="/#setup">Set up</a>
+    <a href="/about.html">About</a>
+    <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+    <a class="pill primary small" href="https://github.com/kamanashishroy/retouch/releases/latest" target="_blank" rel="noopener">Install</a>
+  </nav>
+</header>
+
+<main class="page">
+  <section class="privacy-hero">
+    <p class="eyebrow">Privacy policy</p>
+    <h1 class="giant"><span class="word">Nothing leaves</span><br><span class="word thin">your machine.</span></h1>
+    <p class="lede">Retouch is a Chrome extension that edits the text of HTML files on your own disk and saves them in place. This page says exactly what it stores, what it reads and writes, and what it never does. It is short because there is little to tell.</p>
+    <p class="meta">Effective 16 September 2026. Applies to Retouch 0.2.0 and later, installed from the Chrome Web Store, the Microsoft Edge Add-ons store or GitHub.</p>
+    <div class="grid">
+      <div class="no"><b>No server</b><span>Retouch makes no network requests. There is no account, no sign-in, no upload and no update check of its own.</span></div>
+      <div class="no"><b>No analytics</b><span>No usage tracking, crash reporting, telemetry or third-party scripts of any kind.</span></div>
+      <div class="no"><b>No browsing data</b><span>Retouch runs only on <code>file://</code> pages you open, and only does anything after you click its icon. It never sees websites.</span></div>
+      <div class="no"><b>No sharing or sale</b><span>There is nothing to share. Retouch has no data about you and transfers none to anyone, including us.</span></div>
+      <div class="yes"><b>Files you choose</b><span>It reads the HTML file you open and writes the same file when you press Save. Images you pick are copied beside the page.</span></div>
+      <div class="yes"><b>Folders you grant</b><span>It remembers the folders you allow, on your device, so the next Save needs no dialog.</span></div>
+    </div>
+  </section>
+
+  <section class="body">
+    <h2>What Retouch stores on your device</h2>
+    <p>Retouch keeps one small record in the browser's storage for the extension (IndexedDB), on your computer only:</p>
+    <ul>
+      <li><b>Folder grants.</b> When you pick a folder in Chrome's folder dialog so Retouch can save into it, Chrome hands the extension a handle for that folder. Retouch stores the handle, the folder's name, the path prefix under which it found your file, and the time you added it. This is what lets the next Save happen without another dialog. Chrome still asks you to confirm the grant once after each restart.</li>
+    </ul>
+    <p>That is the whole list. Retouch stores no history of files you opened, no copies of their contents, no settings that describe you and no identifiers. Uninstalling the extension deletes the record. You can also revoke a folder at any time from Chrome's site settings for the extension.</p>
+    <p>While you are editing, the file's text and the page's stylesheets are held in memory so Retouch can patch the source exactly and list the styles the page already uses. That memory is released when you leave the page.</p>
+  </section>
+
+  <section class="body">
+    <h2>What Retouch reads and writes</h2>
+    <ul>
+      <li><b>The file you open.</b> When you click the Retouch icon on a <code>file://</code> page, Retouch reads that HTML file so it can show it in the editor and patch its source when you save.</li>
+      <li><b>The file you save.</b> Save rewrites only the text runs or elements you changed, in the original file, in place. Everything else stays byte for byte as it was.</li>
+      <li><b>Images you choose.</b> If you replace an image, the file you picked is copied into the page's folder under a name that does not collide, and the page is pointed at the copy.</li>
+      <li><b>Locating the file.</b> To find your open file inside a granted folder, Retouch walks that folder by name and compares the candidate's contents with the page it is showing. It does not index, list or read other files for any other purpose.</li>
+      <li><b>The practice page.</b> The tour can write a small tutorial file to <code>Downloads/Retouch</code> so you have something safe to edit. That uses Chrome's downloads permission, which Retouch asks for only at that click and only if you want the page.</li>
+    </ul>
+  </section>
+
+  <section class="body">
+    <h2>Permissions, and why</h2>
+    <ul>
+      <li><b>Access to file URLs</b> (<code>file:///*</code>). Retouch edits local files, so it needs to run on pages loaded from your disk. This is the only host permission. It has no access to <code>http</code> or <code>https</code> websites at all, and Chrome keeps even this switched off until you turn on "Allow access to file URLs" in the extension's details.</li>
+      <li><b>Downloads</b> (optional). Requested once, when you ask for the practice page, because it is the only way for an extension to place a file in a known location and then open it. Decline it and everything else still works.</li>
+    </ul>
+    <p>Retouch asks for nothing else: no tabs, no history, no cookies, no clipboard, no storage permission, no access to websites.</p>
+  </section>
+
+  <section class="body">
+    <h2>What Retouch never does</h2>
+    <ul>
+      <li>Send any data anywhere. There is no server to send it to and no code that talks to one.</li>
+      <li>Collect analytics, telemetry or crash reports.</li>
+      <li>Read, record or infer your browsing activity. Its script is inert on every page except a local file shown inside the Retouch editor.</li>
+      <li>Load code from the internet. Everything Retouch runs ships inside the extension package and is open source.</li>
+      <li>Sell, share or transfer data about you to anyone, for any purpose. It has none.</li>
+    </ul>
+    <p>The only network activity connected to Retouch is Chrome's own: the Chrome Web Store keeps the extension updated, under Google's privacy policy, and the links on the tour open fastretouch.com or GitHub in a normal tab when you click them.</p>
+  </section>
+
+  <section class="body">
+    <h2>Children, changes and contact</h2>
+    <p>Retouch is a general-purpose tool and is not directed at children. It collects no personal information from anyone.</p>
+    <p>If a future version handles data differently, for instance an optional update check, this page will say so with a new effective date before that version ships, the change will be described in the release notes, and the extension will tell you inside its own interface before the new behaviour is switched on.</p>
+    <p>Retouch is made by Kamanashish Roy and is open source under the MIT licence. Questions about this policy go to <a href="mailto:hello@fastretouch.com">hello@fastretouch.com</a> or the <a href="https://github.com/kamanashishroy/retouch/issues" target="_blank" rel="noopener">issue tracker</a>. If you would rather check than trust, <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">read the code</a>.</p>
+    <p class="foot"><a href="/">fastretouch.com</a> · <a href="/about.html">About</a> · <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">GitHub</a></p>
+  </section>
+</main>
+</body>
+</html>

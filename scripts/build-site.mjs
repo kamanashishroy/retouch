@@ -33,7 +33,7 @@ const meta = `
 <link rel="apple-touch-icon" href="icons/128.png">
 <link rel="canonical" href="https://fastretouch.com/">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Retouch","applicationCategory":"BrowserApplication","operatingSystem":"Chrome, Edge, Brave, Arc","url":"https://fastretouch.com/","downloadUrl":"https://github.com/kamanashishroy/retouch/releases/latest","softwareVersion":"0.1.0","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Kamanashish Roy","url":"https://fastretouch.com/about.html"},"description":"A Chrome extension that fixes the HTML your AI wrote: click the text, change it, save the file in place."}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Retouch","applicationCategory":"BrowserApplication","operatingSystem":"Chrome, Edge, Brave, Arc","url":"https://fastretouch.com/","downloadUrl":"https://github.com/kamanashishroy/retouch/releases/latest","softwareVersion":"0.2.0","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Kamanashish Roy","url":"https://fastretouch.com/about.html"},"description":"A Chrome extension that fixes the HTML your AI wrote: click the text, change it, save the file in place."}
 </script>`;
 html = html.replace('<title>Retouch</title>', '<title>Retouch · fix the HTML your AI wrote</title>' + meta);
 fs.writeFileSync(path.join(out, 'index.html'), html);
@@ -48,6 +48,6 @@ if (fs.existsSync(extra)) for (const f of fs.readdirSync(extra)) fs.copyFileSync
 fs.writeFileSync(path.join(out, 'CNAME'), 'fastretouch.com\n');
 fs.writeFileSync(path.join(out, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: https://fastretouch.com/sitemap.xml\n');
 const today = new Date().toISOString().slice(0, 10);
-fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://fastretouch.com/</loc><lastmod>${today}</lastmod></url>\n  <url><loc>https://fastretouch.com/about.html</loc><lastmod>${today}</lastmod></url>\n</urlset>\n`);
+fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://fastretouch.com/</loc><lastmod>${today}</lastmod></url>\n  <url><loc>https://fastretouch.com/about.html</loc><lastmod>${today}</lastmod></url>\n  <url><loc>https://fastretouch.com/privacy.html</loc><lastmod>${today}</lastmod></url>\n</urlset>\n`);
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
 console.log('site built:', fs.readdirSync(out).join(', '));

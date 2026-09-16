@@ -6,7 +6,7 @@ Retouch is a Chrome extension for the HTML pages your AI keeps generating: repor
 one-pagers. Open the file, click the Retouch icon, click any text, change it, press Save. The file
 on your disk is updated in place, and everything you did not touch stays byte for byte the same.
 
-Nothing leaves your machine. No server, no account, no upload.
+Nothing leaves your machine. No server, no account, no upload. The full [privacy policy](https://fastretouch.com/privacy.html) fits on one page.
 
 ## What it does
 
@@ -18,7 +18,7 @@ Nothing leaves your machine. No server, no account, no upload.
 
 ## Install
 
-Until the Chrome Web Store listing:
+A Chrome Web Store listing is on its way. Until it is live:
 
 1. Download the latest release zip and unzip it somewhere permanent.
 2. Open `chrome://extensions`, switch on Developer mode, click **Load unpacked**, choose the folder.
