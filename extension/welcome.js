@@ -105,4 +105,4 @@ async function makePractice() {
     practiceState.className = 'state warn';
   }
 }
-for (const id of ['make-practice', 'cta-top', 'cta-bottom']) document.getElementById(id).addEventListener('click', makePractice);
+for (const id of ['make-practice', 'cta-top', 'cta-hero', 'cta-bottom']) document.getElementById(id).addEventListener('click', makePractice);

@@ -41,7 +41,13 @@ body.web li.web-only { display: grid !important; }
 .steps code { font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 14px; background: var(--glass); padding: 2px 8px; border-radius: 999px; }
 .fine a { color: var(--secondary); }
 .fine a:hover { color: var(--fg); }
-a.pill { display: inline-flex; align-items: center; text-decoration: none; }
+a.pill, button.pill { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+/* Browser mark inside install buttons */
+.pill .ic { width: 18px; height: 18px; margin-right: 9px; flex: none; }
+.pill.small .ic { width: 15px; height: 15px; margin-right: 7px; }
+.pill.big .ic { width: 21px; height: 21px; margin-right: 10px; }
+.cta { margin: 30px 0 0; }
+.cta-sub { margin-top: 14px; font-weight: 600; }
 
 /* The race: another prompt versus Retouch */
 .race { margin: 34px 0 0; max-width: 640px; display: grid; gap: 12px; }
@@ -75,7 +81,7 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; }
 
 /* Deck */
 .deck { position: relative; z-index: 1; height: 100%; overflow-y: auto; scroll-snap-type: y mandatory; }
-.slide { min-height: 100vh; scroll-snap-align: start; display: grid; place-items: center; padding: 100px 28px 60px; }
+.slide { min-height: 100vh; min-height: 100svh; scroll-snap-align: start; display: grid; place-items: center; padding: 100px 28px 60px; }
 .wrap { width: min(1100px, 100%); }
 .wrap.two { display: grid; grid-template-columns: 1.1fr .9fr; gap: 64px; align-items: center; }
 .wrap.center { text-align: center; }
@@ -187,5 +193,32 @@ a.pill { display: inline-flex; align-items: center; text-decoration: none; }
 .state { color: var(--secondary); font-weight: 600; font-size: 15px; }
 .state.ok { color: #7ed491; }
 .state.warn { color: var(--yellow); }
+
+/* Phones: one column, no side dots, the nav keeps only the brand and the install button */
+@media (max-width: 700px) {
+  .top { height: 60px; padding: 0 16px; }
+  .brand { font-size: 15px; } .brand img { width: 26px; height: 26px; }
+  .topnav { gap: 12px; }
+  .topnav a:not(.pill) { display: none; }
+  .dots { display: none; }
+  .slide { padding: 84px 20px 48px; }
+  .eyebrow { margin-bottom: 16px; }
+  .giant { margin-bottom: 26px; }
+  .display { font-size: clamp(38px, 11.5vw, 64px); }
+  .lede { font-size: 17px; }
+  .lane { grid-template-columns: 1fr auto; grid-template-areas: "lbl t" "bar bar"; row-gap: 6px; }
+  .lane .lbl { grid-area: lbl; } .lane .bar { grid-area: bar; } .lane .t { grid-area: t; min-width: 0; }
+  .demo.pop { display: grid; justify-self: stretch; max-width: 100%; padding: 12px; }
+  .demo-pill { flex-wrap: wrap; justify-content: center; row-gap: 4px; }
+  .demo-pill .sep { display: none; }
+  .demo-pill > * { padding: 6px 9px; }
+  .chrome-bar .callout { display: none; }
+  .steps li { grid-template-columns: 34px 1fr; gap: 12px; padding: 18px 16px; }
+  .steps .num { width: 32px; height: 32px; font-size: 14px; }
+  .steps h3 { font-size: 20px; }
+  .pill.big { height: 52px; padding: 0 22px; font-size: 17px; }
+  .cta .pill.big, .wrap.center .row .pill.big { width: 100%; }
+  .facts li { padding: 16px 18px; font-size: 16px; }
+}
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
