@@ -39,6 +39,9 @@ body.web .ext-only { display: none !important; }
 body.web .row .web-only, body.web li.web-only, body.web .pill.web-only { display: inline-flex !important; }
 body.web li.web-only { display: grid !important; }
 .steps code { font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 14px; background: var(--glass); padding: 2px 8px; border-radius: 999px; }
+/* Links in running text: inherit the text color, hairline underline, yellow underline on hover */
+a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-decoration-color: rgba(245, 245, 247, .35); text-underline-offset: 3px; transition: color .18s, text-decoration-color .18s; }
+a:hover { color: var(--fg); text-decoration-color: var(--yellow); }
 .fine a { color: var(--secondary); }
 .fine a:hover { color: var(--fg); }
 a.pill, button.pill { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
@@ -62,8 +65,8 @@ a.pill, button.pill { display: inline-flex; align-items: center; justify-content
 @keyframes fill { to { width: 100%; } }
 .brand img { width: 28px; height: 28px; border-radius: 8px; }
 .topnav { display: flex; align-items: center; gap: 22px; }
-.topnav a { color: var(--secondary); text-decoration: none; font-weight: 600; font-size: 15px; transition: color .18s; }
-.topnav a:hover { color: var(--fg); }
+.topnav a:not(.pill) { color: var(--secondary); text-decoration: none; font-weight: 600; font-size: 15px; transition: color .18s; }
+.topnav a:not(.pill):hover { color: var(--fg); }
 
 /* Pills */
 .pill {
@@ -74,7 +77,7 @@ a.pill, button.pill { display: inline-flex; align-items: center; justify-content
 .pill:hover { background: rgba(255, 255, 255, .14); transform: translateY(-1px); }
 .pill:active { transform: scale(.96); }
 .pill.primary { background: #fff; color: #0b0b0d; border-color: transparent; }
-.pill.primary:hover { box-shadow: 0 10px 30px rgba(255, 255, 255, .18); }
+.pill.primary:hover { color: #0b0b0d; background: #fff; box-shadow: 0 10px 30px rgba(255, 255, 255, .18); }
 .pill.small { height: 36px; padding: 0 16px; font-size: 14px; }
 .pill.big { height: 56px; padding: 0 30px; font-size: 18px; }
 .pill:disabled { opacity: .5; pointer-events: none; }
