@@ -21,14 +21,16 @@ slides.forEach((s, i) => {
 });
 const io = new IntersectionObserver((entries) => {
   for (const e of entries) {
-    if (e.intersectionRatio > .5) {
+    // A slide counts as current when most of it is on screen, or when it fills most of the screen
+    // (a slide taller than two viewports, like the compare table on a phone, never reaches half of itself).
+    if (e.intersectionRatio > .5 || (e.rootBounds && e.intersectionRect.height > e.rootBounds.height * .5)) {
       e.target.classList.add('in');
       const i = slides.indexOf(e.target);
       [...dots.children].forEach((d, j) => d.classList.toggle('on', i === j));
       history.replaceState(null, '', '#' + e.target.id);
     }
   }
-}, { root: deck, threshold: [.5] });
+}, { root: deck, threshold: Array.from({ length: 21 }, (_, i) => i / 20) });
 slides.forEach((s) => io.observe(s));
 
 function go(delta) {

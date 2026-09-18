@@ -112,6 +112,19 @@ a.pill, button.pill { display: inline-flex; align-items: center; justify-content
 .facts li { padding: 18px 22px; border-radius: 18px; background: var(--glass); border: 1px solid var(--border); color: var(--secondary); font-size: 17px; }
 .facts b { color: var(--fg); }
 
+#compare .display { font-size: clamp(34px, 4.4vw, 60px); margin-bottom: 22px; }
+/* Compare: what's wrong, what you do today, with Retouch. Rows end on the Retouch cell so each one ends on the win. */
+.compare { width: 100%; max-width: 1000px; margin: 8px 0 0; border-collapse: separate; border-spacing: 0; font-size: 15px; line-height: 1.4;
+  border-radius: 22px; background: var(--glass); border: 1px solid var(--border); overflow: hidden; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.compare th, .compare td { padding: 9px 18px; text-align: left; vertical-align: top; border-top: 1px solid var(--border); }
+.compare thead th { border-top: 0; padding-top: 14px; padding-bottom: 12px; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--secondary); background: rgba(255, 255, 255, .04); }
+.compare tbody th { font-weight: 700; color: var(--fg); width: 27%; }
+.compare tbody td { color: var(--secondary); font-weight: 500; }
+/* The Retouch column is the answer, so it sits on a faint warm tint, header included. */
+.compare tbody td:last-child { color: var(--fg); font-weight: 600; width: 26%; }
+.compare th:last-child, .compare td:last-child { background: rgba(244, 192, 95, .08); }
+.compare thead th:last-child { color: var(--yellow); }
+
 /* Reveal on scroll */
 .slide .wrap > *, .slide .wrap.two > div > * { opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .8s var(--ease); }
 .slide.in .wrap > *, .slide.in .wrap.two > div > * { opacity: 1; transform: none; }
@@ -229,6 +242,21 @@ a.pill, button.pill { display: inline-flex; align-items: center; justify-content
   .pill.big { height: 52px; padding: 0 22px; font-size: 17px; }
   .cta .pill.big, .wrap.center .row .pill.big { width: 100%; }
   .facts li { padding: 16px 18px; font-size: 16px; }
+  .compare, .compare tbody, .compare tr, .compare th, .compare td { display: block; width: auto; }
+  .compare thead { display: none; }
+  .compare { background: none; border: 0; border-radius: 0; -webkit-backdrop-filter: none; backdrop-filter: none; overflow: visible; display: grid; gap: 12px; }
+  .compare tr { border-radius: 18px; background: var(--glass); border: 1px solid var(--border); padding: 4px 0 6px; }
+  .compare th, .compare td { border-top: 0; padding: 10px 16px 4px; }
+  .compare tbody th { font-size: 17px; padding-bottom: 2px; }
+  .compare tbody td { padding-left: 16px; }
+  .compare tbody th, .compare tbody td:last-child { width: auto; }
+  .compare tbody td::before { content: attr(data-label); display: block; margin: 0 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--secondary); }
+  .compare tbody td:last-child::before { color: var(--yellow); }
+  .compare tr { overflow: hidden; }
+  .compare th:last-child, .compare td:last-child { background: none; }
+  .compare tbody td:last-child { margin-top: 6px; padding-top: 10px; padding-bottom: 12px; background: rgba(244, 192, 95, .08); }
+  /* Slides taller than the screen scroll under the bar, so on phones it gets a glass back. */
+  .top { background: rgba(11, 11, 13, .55); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
