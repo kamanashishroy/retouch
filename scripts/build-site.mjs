@@ -33,7 +33,7 @@ const meta = `
 <link rel="apple-touch-icon" href="icons/128.png">
 <link rel="canonical" href="https://fastretouch.com/">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Retouch","applicationCategory":"BrowserApplication","operatingSystem":"Chrome, Edge, Brave, Arc","url":"https://fastretouch.com/","downloadUrl":"https://github.com/kamanashishroy/retouch/releases/latest","softwareVersion":"0.2.0","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Kamanashish Roy","url":"https://fastretouch.com/about.html"},"description":"A Chrome extension that fixes the HTML your AI wrote: click the text, change it, save the file in place."}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Retouch","applicationCategory":"BrowserApplication","operatingSystem":"Chrome, Edge, Brave, Arc","url":"https://fastretouch.com/","installUrl":"https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh","downloadUrl":"https://github.com/kamanashishroy/retouch/releases/latest","softwareVersion":"0.2.0","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Kamanashish Roy","url":"https://fastretouch.com/about.html"},"description":"A Chrome extension that fixes the HTML your AI wrote: click the text, change it, save the file in place."}
 </script>`;
 html = html.replace('<title>Retouch</title>', '<title>Retouch · fix the HTML your AI wrote</title>' + meta);
 fs.writeFileSync(path.join(out, 'index.html'), html);

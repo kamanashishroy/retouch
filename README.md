@@ -18,12 +18,13 @@ Nothing leaves your machine. No server, no account, no upload. The full [privacy
 
 ## Install
 
-A Chrome Web Store listing is on its way. Until it is live:
+**[Add Retouch to Chrome](https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh)** from the Chrome Web Store, then:
 
-1. Download the latest release zip and unzip it somewhere permanent.
-2. Open `chrome://extensions`, switch on Developer mode, click **Load unpacked**, choose the folder.
-3. Open Retouch's Details and switch on **Allow access to file URLs**. Restart Chrome.
-4. Click the Retouch icon in the toolbar. The tour walks you through the rest and gives you a practice page.
+1. Open Retouch's Details on `chrome://extensions` and switch on **Allow access to file URLs**. Restart Chrome.
+2. Click the Retouch icon in the toolbar. The tour walks you through the rest and gives you a practice page.
+
+Prefer the source? Download the latest release zip, unzip it somewhere permanent, and on `chrome://extensions`
+switch on Developer mode and **Load unpacked** on that folder. Same files, no automatic updates.
 
 Chrome, Edge, Brave and Arc. Local files only.
 

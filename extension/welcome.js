@@ -3,9 +3,11 @@
 const IS_EXT = typeof chrome !== 'undefined' && !!(chrome.runtime && chrome.runtime.id);
 const EXT_ID = IS_EXT ? chrome.runtime.id : null;
 const REPO_URL = 'https://github.com/kamanashishroy/retouch';
+const STORE_URL = 'https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh';
 if (!IS_EXT) document.body.classList.add('web');
 for (const a of document.querySelectorAll('.repo-link')) a.href = REPO_URL;
 for (const a of document.querySelectorAll('.releases-link')) a.href = REPO_URL + '/releases/latest';
+for (const a of document.querySelectorAll('.store-link')) a.href = STORE_URL;
 const slides = [...document.querySelectorAll('.slide')];
 const deck = document.querySelector('.deck');
 const dots = document.querySelector('.dots');
@@ -61,7 +63,7 @@ document.getElementById('open-details').addEventListener('click', () => {
 // then opened in the editor. The download gives us the absolute path, which a folder handle never would.
 const practiceState = document.getElementById('practice-state');
 async function makePractice() {
-  if (!IS_EXT) { window.open(REPO_URL + '/releases/latest', '_blank'); return; }
+  if (!IS_EXT) { window.open(STORE_URL, '_blank'); return; }
   practiceState.textContent = '';
   practiceState.className = 'state';
   const allowed = await new Promise((r) => chrome.extension.isAllowedFileSchemeAccess(r));
