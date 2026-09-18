@@ -69,7 +69,7 @@ body::before {
 
 /* Pills */
 .btn {
-  height: 36px; padding: 0 16px; border-radius: 999px; font: inherit; font-weight: 600; font-size: 14px; cursor: default;
+  height: 36px; padding: 0 16px; border-radius: 999px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer;
   border: 1px solid var(--glass-border); background: var(--glass); color: var(--pill-fg);
   transition: background .18s var(--ease), color .18s var(--ease), transform .22s var(--spring), opacity .22s var(--ease), display .22s allow-discrete;
 }
@@ -87,7 +87,7 @@ body::before {
 .btn.primary { position: relative; overflow: visible; }
 .btn:focus-visible, .close:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(244, 192, 95, .7); }
 .close {
-  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--glass-border); cursor: default;
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--glass-border); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--glass); color: var(--fg); transition: background .18s var(--ease), transform .22s var(--spring);
 }

@@ -70,7 +70,7 @@ a.pill, button.pill { display: inline-flex; align-items: center; justify-content
 
 /* Pills */
 .pill {
-  height: 44px; padding: 0 22px; border-radius: 999px; font: inherit; font-weight: 700; font-size: 16px; cursor: default; color: var(--fg);
+  height: 44px; padding: 0 22px; border-radius: 999px; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; color: var(--fg); position: relative; overflow: hidden;
   border: 1px solid var(--border); background: var(--glass); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   transition: background .18s var(--ease), transform .24s var(--spring), box-shadow .24s var(--ease);
 }
@@ -78,6 +78,13 @@ a.pill, button.pill { display: inline-flex; align-items: center; justify-content
 .pill:active { transform: scale(.96); }
 .pill.primary { background: #fff; color: #0b0b0d; border-color: transparent; }
 .pill.primary:hover { color: #0b0b0d; background: #fff; box-shadow: 0 10px 30px rgba(255, 255, 255, .18); }
+/* Shine: a soft band sweeps across the pill once per hover. White on glass, warm yellow on white. */
+.pill::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: -60%; width: 45%; pointer-events: none; opacity: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, .55) 50%, transparent 100%); transform: skewX(-18deg); }
+.pill.primary::after { background: linear-gradient(105deg, transparent 0%, rgba(244, 192, 95, .6) 50%, transparent 100%); }
+.pill:hover::after { animation: shine .8s linear both; }
+@keyframes shine { 0% { left: -60%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { left: 130%; opacity: 0; } }
+.pill > * { position: relative; z-index: 1; }
 .pill.small { height: 36px; padding: 0 16px; font-size: 14px; }
 .pill.big { height: 56px; padding: 0 30px; font-size: 18px; }
 .pill:disabled { opacity: .5; pointer-events: none; }
@@ -118,7 +125,7 @@ a.pill, button.pill { display: inline-flex; align-items: center; justify-content
 
 /* Dots */
 .dots { position: fixed; z-index: 5; right: 22px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; }
-.dots a { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .28); display: block; transition: transform .3s var(--spring), background .2s; position: relative; }
+.dots a { cursor: pointer; width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .28); display: block; transition: transform .3s var(--spring), background .2s; position: relative; }
 .dots a.on { background: #fff; transform: scale(1.5); }
 .dots a::after { content: attr(data-title); position: absolute; right: 18px; top: -5px; font-size: 12px; font-weight: 600; color: var(--secondary); white-space: nowrap; opacity: 0; transition: opacity .2s; }
 .dots a:hover::after { opacity: 1; }

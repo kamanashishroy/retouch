@@ -36,4 +36,4 @@ Chrome, Edge, Brave and Arc. Local files only.
 
 ## License
 
-MIT. Say hello at hello@fastretouch.com.
+MIT. Support and feature requests: message or tag [@doubts on X](https://x.com/doubts), or hello@fastretouch.com.
