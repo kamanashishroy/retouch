@@ -203,3 +203,62 @@ test('attr: matches an entity-encoded value and refuses a missing one', () => {
   const no = apply('<img src="a.png">', [{ kind: 'attr', tag: 'img', attr: 'src', before: 'zzz.png', after: 'b.png', skip: 0, anchor: '' }]);
   assert.equal(no.failures[0].reason, 'attr-not-found');
 });
+
+const styleChange = (property, before, after, extra = {}) => ({ kind: 'style', property, before, after, skip: 0, media: null, ...extra });
+
+test('style: replaces one property value and leaves the rest byte for byte', () => {
+  const src = '<style>\n  :root { --bg: #fafafa; --text: #111; }\n</style>\n<p>--bg: #fafafa</p>';
+  const r = apply(src, [styleChange('--bg', '#fafafa', '#0f172a')]);
+  assert.equal(r.ok, true);
+  assert.equal(r.source, '<style>\n  :root { --bg: #0f172a; --text: #111; }\n</style>\n<p>--bg: #fafafa</p>');
+});
+
+test('style: skip picks the second declaration in the same media context', () => {
+  const src = '<style>:root{--bg:#fff}body{--bg:#fff}</style>';
+  const r = apply(src, [styleChange('--bg', '#fff', '#000', { skip: 1 })]);
+  assert.equal(r.source, '<style>:root{--bg:#fff}body{--bg:#000}</style>');
+});
+
+test('style: media picks the dark redefinition, and null picks the light one', () => {
+  const src = '<style>:root{--bg:#fff}@media (prefers-color-scheme: dark){:root{--bg:#fff}}</style>';
+  const dark = apply(src, [styleChange('--bg', '#fff', '#000', { media: '(prefers-color-scheme:dark)' })]);
+  assert.equal(dark.source, '<style>:root{--bg:#fff}@media (prefers-color-scheme: dark){:root{--bg:#000}}</style>');
+  const light = apply(src, [styleChange('--bg', '#fff', '#eee')]);
+  assert.equal(light.source, '<style>:root{--bg:#eee}@media (prefers-color-scheme: dark){:root{--bg:#fff}}</style>');
+});
+
+test('style: refuses when the value in the file is not the one we saw', () => {
+  const r = apply('<style>:root{--bg:#fff}</style>', [styleChange('--bg', '#fafafa', '#000')]);
+  assert.equal(r.ok, false);
+  assert.equal(r.failures[0].reason, 'style-not-found');
+});
+
+test('style: never matches a value inside a script string or in page text', () => {
+  const src = '<script>const s = "--bg: #fafafa";</script><p>--bg: #fafafa</p>';
+  const r = apply(src, [styleChange('--bg', '#fafafa', '#000')]);
+  assert.equal(r.ok, false);
+  assert.equal(r.source, src);
+});
+
+test('style: preserves !important, odd whitespace and a missing final semicolon', () => {
+  const src = '<style>:root{ --a :  #fff !important; --b:#eee }</style>';
+  const r = apply(src, [styleChange('--a', '#fff', '#000'), styleChange('--b', '#eee', '#111')]);
+  assert.equal(r.source, '<style>:root{ --a :  #000 !important; --b:#111 }</style>');
+});
+
+test('style: a style change and a text change in the same apply both land, either order', () => {
+  const src = '<style>:root{--bg:#fff}</style><p>Hello</p>';
+  const want = '<style>:root{--bg:#000}</style><p>Goodbye</p>';
+  const text = { kind: 'text', before: 'Hello', after: 'Goodbye', anchor: '' };
+  assert.equal(apply(src, [styleChange('--bg', '#fff', '#000'), text]).source, want);
+  assert.equal(apply(src, [text, styleChange('--bg', '#fff', '#000')]).source, want);
+});
+
+test('style: only :root, html and body declarations count, so a component rule above them is skipped', () => {
+  const src = '<style>.hero{--accent:#d00}:root,.x{--accent:#d00}</style>';
+  const r = apply(src, [styleChange('--accent', '#d00', '#00d')]);
+  assert.equal(r.source, '<style>.hero{--accent:#d00}:root,.x{--accent:#00d}</style>');
+  const only = apply('<style>.hero{--accent:#d00}</style>', [styleChange('--accent', '#d00', '#00d')]);
+  assert.equal(only.ok, false);
+  assert.equal(only.failures[0].reason, 'style-not-found');
+});

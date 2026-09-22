@@ -8,11 +8,41 @@ const RetouchVault = {
   async save(vaults) {
     await RetouchIDB.set('vaults', vaults);
   },
-  async add(handle) {
+  // `prefix` is the path segments above and including the folder, when they are already known (a
+  // dropped folder that was located on disk). Storing it means the first save resolves without a search.
+  async add(handle, prefix) {
     const vaults = await this.list();
-    for (const v of vaults) if (await v.handle.isSameEntry(handle)) return;
-    vaults.push({ handle, prefix: null, addedAt: Date.now() });
+    for (const v of vaults) {
+      if (!(await v.handle.isSameEntry(handle))) continue;
+      if (prefix && v.prefix !== prefix && (v.prefix || []).join('/') !== prefix.join('/')) {
+        v.prefix = prefix;
+        await this.save(vaults);
+      }
+      return;
+    }
+    vaults.push({ handle, prefix: prefix || null, addedAt: Date.now() });
     await this.save(vaults);
+  },
+  // Every HTML page in a folder, up to `depth` levels of directories. For the front door's list.
+  async listHtml(dir, depth = 2) {
+    const out = [];
+    const walkInto = async (handle, rel, level) => {
+      const subs = [];
+      for await (const [name, entry] of handle.entries()) {
+        if (out.length >= 200) return;
+        if (name.startsWith('.') || name === 'node_modules') continue;
+        if (entry.kind === 'file') {
+          if (/\.html?$/i.test(name)) out.push({ relPath: rel.concat(name).join('/'), name });
+        } else if (level < depth - 1) subs.push([name, entry]);
+      }
+      for (const [name, entry] of subs) {
+        if (out.length >= 200) return;
+        await walkInto(entry, rel.concat(name), level + 1);
+      }
+    };
+    await walkInto(dir, [], 0);
+    out.sort((a, b) => a.relPath.localeCompare(b.relPath));
+    return out.slice(0, 200);
   },
   async remove(handle) {
     const vaults = await this.list();

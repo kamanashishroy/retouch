@@ -1,110 +1,175 @@
-// The tour: slide navigation, live setup state, and the one-click practice page.
-// The same file is the website at fastretouch.com; without extension APIs it runs in web mode.
+// Onboarding setup logic and animated settings mockup
 const IS_EXT = typeof chrome !== 'undefined' && !!(chrome.runtime && chrome.runtime.id);
 const EXT_ID = IS_EXT ? chrome.runtime.id : null;
-const REPO_URL = 'https://github.com/kamanashishroy/retouch';
 const STORE_URL = 'https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh';
-if (!IS_EXT) document.body.classList.add('web');
-for (const a of document.querySelectorAll('.repo-link')) a.href = REPO_URL;
-for (const a of document.querySelectorAll('.releases-link')) a.href = REPO_URL + '/releases/latest';
-for (const a of document.querySelectorAll('.store-link')) a.href = STORE_URL;
-const slides = [...document.querySelectorAll('.slide')];
-const deck = document.querySelector('.deck');
-const dots = document.querySelector('.dots');
 
-slides.forEach((s, i) => {
-  const a = document.createElement('a');
-  a.href = '#' + s.id;
-  a.dataset.title = s.dataset.title;
-  a.setAttribute('aria-label', s.dataset.title);
-  dots.appendChild(a);
-});
-const io = new IntersectionObserver((entries) => {
-  for (const e of entries) {
-    // A slide counts as current when most of it is on screen, or when it fills most of the screen
-    // (a slide taller than two viewports, like the compare table on a phone, never reaches half of itself).
-    if (e.intersectionRatio > .5 || (e.rootBounds && e.intersectionRect.height > e.rootBounds.height * .5)) {
-      e.target.classList.add('in');
-      const i = slides.indexOf(e.target);
-      [...dots.children].forEach((d, j) => d.classList.toggle('on', i === j));
-      history.replaceState(null, '', '#' + e.target.id);
-    }
-  }
-}, { root: deck, threshold: Array.from({ length: 21 }, (_, i) => i / 20) });
-slides.forEach((s) => io.observe(s));
-
-function go(delta) {
-  const cur = slides.findIndex((s) => s.classList.contains('in') && [...dots.children][slides.indexOf(s)].classList.contains('on'));
-  const next = Math.max(0, Math.min(slides.length - 1, (cur === -1 ? 0 : cur) + delta));
-  slides[next].scrollIntoView({ behavior: 'smooth' });
+if (!IS_EXT) {
+  document.body.classList.add('web');
+  const storeLinks = document.querySelectorAll('.store-link');
+  for (const a of storeLinks) a.href = STORE_URL;
 }
-document.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT') return;
-  if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(1); }
-  if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
-});
 
-// Setup state
+// 1. Check & display file URL access state
 const accessState = document.getElementById('access-state');
 function checkAccess() {
-  if (!IS_EXT) return;
+  if (!IS_EXT || !accessState) return;
   chrome.extension.isAllowedFileSchemeAccess((ok) => {
-    accessState.textContent = ok ? 'On. Retouch can see your files.' : 'Off. Switch it on, then restart Chrome.';
+    accessState.textContent = ok ? 'On. Retouch can see your files.' : 'Off. Switch it on in Chrome Settings, then restart Chrome.';
     accessState.className = 'state ' + (ok ? 'ok' : 'warn');
-    document.getElementById('step-access').classList.toggle('done', ok);
-    document.getElementById('step-restart').classList.toggle('done', ok);
   });
 }
 checkAccess();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkAccess(); });
-document.getElementById('open-details').addEventListener('click', () => {
-  if (IS_EXT) chrome.tabs.create({ url: `chrome://extensions/?id=${EXT_ID}` });
-});
 
-// Practice page: written into Downloads/Retouch through the downloads API (permission asked on click),
-// then opened in the editor. The download gives us the absolute path, which a folder handle never would.
-const practiceState = document.getElementById('practice-state');
-async function makePractice() {
-  if (!IS_EXT) { window.open(STORE_URL, '_blank'); return; }
-  practiceState.textContent = '';
-  practiceState.className = 'state';
-  const allowed = await new Promise((r) => chrome.extension.isAllowedFileSchemeAccess(r));
-  if (!allowed) {
-    practiceState.textContent = 'Do steps 1 and 2 first: Retouch cannot open local files yet.';
-    practiceState.className = 'state warn';
-    document.getElementById('setup').scrollIntoView({ behavior: 'smooth' });
-    return;
-  }
-  const granted = await chrome.permissions.request({ permissions: ['downloads'] });
-  if (!granted) {
-    practiceState.textContent = 'Without that permission Retouch cannot place the file. You can still open any HTML file of your own.';
-    practiceState.className = 'state warn';
-    return;
-  }
-  try {
-    const html = await (await fetch(chrome.runtime.getURL('practice.html'))).text();
-    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-    const id = await chrome.downloads.download({ url, filename: 'Retouch/retouch-practice.html', conflictAction: 'uniquify', saveAs: false });
-    const item = await new Promise((resolve, reject) => {
-      const started = Date.now();
-      const poll = async () => {
-        const [d] = await chrome.downloads.search({ id });
-        if (d && d.state === 'complete' && d.filename) return resolve(d);
-        if (d && d.state === 'interrupted') return reject(new Error('The download was interrupted.'));
-        if (Date.now() - started > 15000) return reject(new Error('Chrome did not finish writing the file.'));
-        setTimeout(poll, 150);
-      };
-      poll();
-    });
-    URL.revokeObjectURL(url);
-    const fileUrl = 'file://' + item.filename.split('/').map(encodeURIComponent).join('/').replace(/^\/?/, '/');
-    practiceState.textContent = `Saved to ${item.filename.replace(/^.*\/Downloads\//, 'Downloads/')}. Opening…`;
-    practiceState.className = 'state ok';
-    document.getElementById('step-practice').classList.add('done');
-    await chrome.tabs.create({ url: `${chrome.runtime.getURL('viewer.html')}?src=${encodeURIComponent(fileUrl)}&fresh=1` });
-  } catch (e) {
-    practiceState.textContent = (e && e.message) || String(e);
-    practiceState.className = 'state warn';
-  }
+// 2. Open Chrome Extension Settings button
+const openDetailsBtn = document.getElementById('open-details');
+if (openDetailsBtn) {
+  openDetailsBtn.addEventListener('click', () => {
+    if (IS_EXT) {
+      chrome.tabs.create({ url: `chrome://extensions/?id=${EXT_ID}` });
+    } else {
+      window.open(STORE_URL, '_blank');
+    }
+  });
 }
-for (const id of ['make-practice', 'cta-top', 'cta-hero', 'cta-bottom']) document.getElementById(id).addEventListener('click', makePractice);
+
+// 3. Make practice page action
+const makePracticeBtn = document.getElementById('make-practice');
+const practiceState = document.getElementById('practice-state');
+
+if (makePracticeBtn) {
+  makePracticeBtn.addEventListener('click', async () => {
+    if (!IS_EXT) { window.open(STORE_URL, '_blank'); return; }
+    if (practiceState) {
+      practiceState.textContent = '';
+      practiceState.className = 'state';
+    }
+    const allowed = await new Promise((r) => chrome.extension.isAllowedFileSchemeAccess(r));
+    if (!allowed) {
+      if (practiceState) {
+        practiceState.textContent = 'Please enable file URL access in Chrome Settings first.';
+        practiceState.className = 'state warn';
+      }
+      return;
+    }
+    const granted = await chrome.permissions.request({ permissions: ['downloads'] });
+    if (!granted) {
+      if (practiceState) {
+        practiceState.textContent = 'Permission needed to place practice file.';
+        practiceState.className = 'state warn';
+      }
+      return;
+    }
+    try {
+      const url = chrome.runtime.getURL('practice.html');
+      const wanted = { filename: 'Retouch/retouch-practice.html', conflictAction: 'uniquify' };
+      const ours = new Set([url]);
+      const onName = (item, suggest) => { if (ours.has(item.url)) suggest(wanted); };
+      chrome.downloads.onDeterminingFilename.addListener(onName);
+      let id;
+      try {
+        id = await chrome.downloads.download(Object.assign({ url, saveAs: false }, wanted));
+      } catch (e) {
+        const html = await (await fetch(url)).text();
+        const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+        ours.add(blobUrl);
+        id = await chrome.downloads.download(Object.assign({ url: blobUrl, saveAs: false }, wanted));
+      }
+      chrome.downloads.onDeterminingFilename.removeListener(onName);
+      const search = (id) => new Promise((r) => chrome.downloads.search({ id }, (res) => r(res && res[0])));
+      let item = await search(id);
+      while (item && item.state === 'in_progress') {
+        await new Promise((r) => setTimeout(r, 100));
+        item = await search(id);
+      }
+      if (item && item.state === 'complete' && item.filename) {
+        const fileUrl = 'file://' + item.filename.replace(/\\/g, '/');
+        const viewerUrl = chrome.runtime.getURL('viewer.html') + '?src=' + encodeURIComponent(fileUrl) + '&fresh=1';
+        chrome.tabs.create({ url: viewerUrl });
+      }
+    } catch (err) {
+      if (practiceState) {
+        practiceState.textContent = 'Error creating practice page: ' + (err.message || String(err));
+        practiceState.className = 'state warn';
+      }
+    }
+  });
+}
+
+// 4. Synced multi-toggle animation engine for Image 2 Chrome Mockup
+const cursor = document.getElementById('seq-cursor');
+const togglePin = document.getElementById('toggle-pin');
+const toggleIncognito = document.getElementById('toggle-incognito');
+const toggleFile = document.getElementById('toggle-file');
+
+if (cursor && toggleFile) {
+  let startTime = null;
+  const DURATION = 6000; // 6s cycle
+
+  function animateMock(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = (timestamp - startTime) % DURATION;
+
+    let cursorX, cursorY, scale = 1;
+    let pinOn = false, incognitoOn = false, fileOn = false;
+
+    if (elapsed < 1000) {
+      // Step 1: Move cursor to Pin to toolbar (340, 165)
+      const p = elapsed / 1000;
+      const easeP = 1 - Math.pow(1 - p, 3);
+      cursorX = 260 + (340 - 260) * easeP;
+      cursorY = 280 + (165 - 280) * easeP;
+    } else if (elapsed < 1200) {
+      // Step 1 Click
+      cursorX = 340; cursorY = 165;
+      scale = 1 - 0.2 * Math.sin(((elapsed - 1000) / 200) * Math.PI);
+      pinOn = elapsed >= 1100;
+    } else if (elapsed < 2000) {
+      // Step 2: Move cursor to Allow in Incognito (340, 220)
+      pinOn = true;
+      const p = (elapsed - 1200) / 800;
+      const easeP = 1 - Math.pow(1 - p, 3);
+      cursorX = 340;
+      cursorY = 165 + (220 - 165) * easeP;
+    } else if (elapsed < 2200) {
+      // Step 2 Click
+      pinOn = true;
+      cursorX = 340; cursorY = 220;
+      scale = 1 - 0.2 * Math.sin(((elapsed - 2000) / 200) * Math.PI);
+      incognitoOn = elapsed >= 2100;
+    } else if (elapsed < 3000) {
+      // Step 3: Move cursor to Allow access to file URLs (340, 275)
+      pinOn = true; incognitoOn = true;
+      const p = (elapsed - 2200) / 800;
+      const easeP = 1 - Math.pow(1 - p, 3);
+      cursorX = 340;
+      cursorY = 220 + (275 - 220) * easeP;
+    } else if (elapsed < 3200) {
+      // Step 3 Click
+      pinOn = true; incognitoOn = true;
+      cursorX = 340; cursorY = 275;
+      scale = 1 - 0.2 * Math.sin(((elapsed - 3000) / 200) * Math.PI);
+      fileOn = elapsed >= 3100;
+    } else if (elapsed < 5000) {
+      // Hold state
+      pinOn = true; incognitoOn = true; fileOn = true;
+      cursorX = 340; cursorY = 275; scale = 1;
+    } else {
+      // Move cursor back and reset
+      const p = (elapsed - 5000) / 1000;
+      cursorX = 340 + (260 - 340) * p;
+      cursorY = 275 + (280 - 275) * p;
+      pinOn = false; incognitoOn = false; fileOn = false;
+    }
+
+    cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) scale(${scale})`;
+
+    if (togglePin) togglePin.classList.toggle('on', pinOn);
+    if (toggleIncognito) toggleIncognito.classList.toggle('on', incognitoOn);
+    if (toggleFile) toggleFile.classList.toggle('on', fileOn);
+
+    requestAnimationFrame(animateMock);
+  }
+
+  requestAnimationFrame(animateMock);
+}

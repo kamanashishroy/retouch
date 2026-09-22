@@ -4,168 +4,158 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Retouch</title>
+<title>Setup Retouch</title>
 <link rel="stylesheet" href="welcome.css">
 </head>
-<body>
-<header class="top">
-  <a class="brand" href="#why"><img src="icons/icon.svg" alt=""><span class="lockup"><span class="fast">fast</span><span class="re">retouch</span></span></a>
-  <nav class="topnav">
-    <a href="#setup">Set up</a>
-    <a href="https://fastretouch.com/about.html">About</a>
-    <a href="#" class="repo-link" target="_blank" rel="noopener">Source</a>
-    <button class="pill primary small ext-only" id="cta-top">Try it</button>
-    <a class="pill primary small web-only store-link" href="#" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Install</a>
-  </nav>
-</header>
+<body class="setup-body">
 
-<nav class="dots" aria-label="Slides"></nav>
-
-<main class="deck">
-
-  <section class="slide" id="why" data-title="Why">
-    <div class="wrap">
-      <p class="eyebrow">01 · Why</p>
-      <h1 class="giant hero"><span class="word">Fix the HTML</span><br><span class="word thin">your AI wrote.</span></h1>
-      <p class="lede">Your AI builds a beautiful page. Then you read it, and the small mistakes start showing. A wrong number. A wrong logo. A word where a number should be. A sentence that reads like a machine wrote it. And a desktop full of screenshots you took to explain all that.</p>
-      <p class="lede accent">You want to fix it in a click, not another prompt or a code editor. Retouch is that click. Click the text, change it, save. In seconds.</p>
-      <div class="row cta"><a class="pill primary big web-only store-link" href="#" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a><button class="pill primary big ext-only" id="cta-hero">Create my practice page</button></div>
-      <p class="fine cta-sub">Free and open source · Works on files on your disk</p>
-      <div class="race" aria-label="Time to fix a typo">
-        <div class="lane"><span class="lbl">Another prompt</span><span class="bar slow"><span></span></span><span class="t">about a minute</span></div>
-        <div class="lane"><span class="lbl">Retouch</span><span class="bar fast"><span></span></span><span class="t">about three seconds</span></div>
+<main class="setup-main">
+  <div class="setup-grid">
+    <!-- Left Column: Copy & Actions -->
+    <div class="setup-left">
+      <div class="brand-lockup">
+        <img src="icons/icon.svg" alt="Retouch logo" class="brand-icon">
+        <span class="lockup"><span class="fast">fast</span><span class="re">retouch</span></span>
       </div>
-    </div>
-  </section>
 
-  <section class="slide" id="compare" data-title="Compare">
-    <div class="wrap">
-      <p class="eyebrow">02 · Eight small fixes</p>
-      <h2 class="display">Each one used to mean a <em>rebuild.</em></h2>
-      <table class="compare">
-        <thead><tr><th scope="col">What's wrong</th><th scope="col">What you do today</th><th scope="col">With Retouch</th></tr></thead>
-        <tbody>
-          <tr><th scope="row">Typo in the headline</th><td data-label="Today">Re-prompt and wait for a rebuild. Or open a code editor and hunt for the string in 900 lines of generated markup.</td><td data-label="Retouch">Click it, type, save.</td></tr>
-          <tr><th scope="row">18% should be 21%</th><td data-label="Today">The same rebuild. Or find and replace, and hope the number isn't in four other places.</td><td data-label="Retouch">Change the digits in place.</td></tr>
-          <tr><th scope="row">One sentence has to go</th><td data-label="Today">Describe the sentence to the AI and hope it picks the right one.</td><td data-label="Retouch">Select, delete, save.</td></tr>
-          <tr><th scope="row">Placeholder logo where the real one goes</th><td data-label="Today">Paste a file path into the prompt and hope the rebuild finds it.</td><td data-label="Retouch">Click it, Replace image, pick the file.</td></tr>
-          <tr><th scope="row">Alt text is empty or says “image”</th><td data-label="Today">Find the tag in an editor, or accept the gap and move on.</td><td data-label="Retouch">Type it in, Apply.</td></tr>
-          <tr><th scope="row">The rebuild changed things you liked</th><td data-label="Today">Diff two downloads to find what drifted.</td><td data-label="Retouch">Only what you touched is rewritten.</td></tr>
-          <tr><th scope="row">Downloads full of report(4).html</th><td data-label="Today">Guess which one is current.</td><td data-label="Retouch">Same file, edited in place.</td></tr>
-          <tr><th scope="row">You are not the person who opens a code editor</th><td data-label="Today">Ask someone technical. Wait until Monday.</td><td data-label="Retouch">Click the icon in Chrome.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+      <h1 class="setup-title">Welcome to Retouch</h1>
+      <p class="setup-tagline">One last step to make life easier.</p>
 
-  <section class="slide" id="what" data-title="What">
-    <div class="wrap two">
-      <div>
-        <p class="eyebrow">03 · What</p>
-        <h2 class="display">Click.<br>Type.<br><em>Save.</em></h2>
-        <p class="lede">Retouch is a Chrome extension. Open the file in Chrome, click the Retouch icon in the toolbar, click any text and change it, press Save. The file on your disk is updated in place, and everything you didn't touch stays byte for byte the same.</p>
-      </div>
-      <div class="demo browser" aria-hidden="true">
-        <div class="chrome-bar">
-          <span class="lights"><i></i><i></i><i></i></span>
-          <span class="url">file:///Users/you/Documents/q3-report.html</span>
-          <span class="callout">Click the Retouch icon →</span>
-          <span class="ext"><span class="ext-icon puzzle"></span><span class="ext-icon retouch"><img src="icons/icon.svg" alt=""></span></span>
+      <div class="setup-card">
+        <h2 class="step-heading">Let Retouch access local files</h2>
+        <p class="step-desc">Chrome requires explicit permission to edit local HTML files on your computer.</p>
+        
+        <div class="action-row">
+          <button class="pill primary ext-only" id="open-details">Open Chrome Settings</button>
+          <a class="pill primary web-only store-link" href="#" target="_blank" rel="noopener">Add to Chrome</a>
         </div>
-        <div class="demo-bar"><img src="icons/icon.svg" alt=""><span>Q3 Pipeline Report</span><span class="demo-badge">1 change</span><span class="demo-save">Save</span></div>
-        <div class="demo-page">
-          <h3>Summary</h3>
-          <p>Pipeline grew <span class="demo-change"><span class="demo-old">18%</span><span class="demo-new">21%</span></span> quarter over quarter, driven mainly by event-sourced opportunities.</p>
-          <p class="demo-muted">Generated by an AI assistant. Numbers are illustrative.</p>
+
+        <p class="restart-note">Don't forget to restart Chrome after enabling permissions so Chrome activates file access.</p>
+        
+        <div class="state-row">
+          <span class="state ext-only" id="access-state">Checking permissions...</span>
+        </div>
+
+        <div class="practice-link-row">
+          <button class="link-btn ext-only" id="make-practice">Try practice page →</button>
+          <span class="state" id="practice-state"></span>
         </div>
       </div>
     </div>
-  </section>
 
-  <section class="slide" id="local" data-title="Local">
-    <div class="wrap">
-      <p class="eyebrow">04 · Where your files go</p>
-      <h2 class="display">Nowhere.</h2>
-      <p class="lede">No server, no account, no upload. Retouch reads and writes the file on your own disk and nothing else. It is open source, so you can check.</p>
-      <ul class="facts">
-        <li><b>Byte for byte.</b> Only the text you changed is rewritten. Comments, spacing and scripts stay exactly as your AI left them.</li>
-        <li><b>Script-aware.</b> Text a script generates at load is refused, not silently corrupted.</li>
-        <li><b>Yours.</b> MIT licensed. Fork it, read it, keep it.</li>
-      </ul>
-    </div>
-  </section>
+    <!-- Right Column: Exact Chrome Extensions Details Screen (Matching Image 2) -->
+    <div class="setup-right">
+      <div class="chrome-mock-window">
+        <div class="chrome-mock-header">
+          <div class="window-controls">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="chrome-mock-url">chrome://extensions/?id=retouch</div>
+        </div>
 
-  <section class="slide" id="format" data-title="Format">
-    <div class="wrap two">
-      <div>
-        <p class="eyebrow">05 · Formatting</p>
-        <h2 class="display">Only what the<br>page already<br><em>knows.</em></h2>
-        <p class="lede">Select text and a small pill appears: bold, italic, code, link. The Styles, Color and Font menus list what this page's own stylesheet uses, described in plain words. Nothing is invented, so nothing looks pasted in.</p>
-      </div>
-      <div class="demo pop" aria-hidden="true">
-        <div class="demo-pill"><b>B</b><i>I</i><code>&lt;/&gt;</code><span>Link</span><span class="sep"></span><span>Styles ▾</span><span>Color ▾</span><span>Font ▾</span></div>
-        <div class="demo-menu">
-          <div><span class="sw" style="background:#1f2933"></span>Dark gray</div>
-          <div><span class="sw" style="background:#52606d"></span>Gray</div>
-          <div><span class="sw" style="background:#1f6feb"></span>Blue</div>
-          <div><span class="sw" style="background:#f4c05f"></span>Pale yellow</div>
+        <div class="chrome-settings-panel">
+          <div class="panel-section-title">Permissions</div>
+
+          <div class="setting-group-box">
+            <div class="setting-row-stacked">
+              <div class="setting-label-bold">Site access</div>
+              <div class="setting-subtext">This extension can read and change your data on sites.</div>
+              <div class="setting-subrow">
+                <span class="setting-sublabel">Automatically allow access on the following sites</span>
+                <div class="toggle-switch on" id="toggle-site-access"><span class="toggle-knob"></span></div>
+              </div>
+              <div class="setting-file-pattern">file:///*</div>
+            </div>
+
+            <div class="setting-row-simple">
+              <span>Site settings</span>
+              <span class="arrow-icon">↗</span>
+            </div>
+
+            <div class="setting-row-flex">
+              <span class="setting-label-bold">Pin to toolbar</span>
+              <div class="toggle-switch" id="toggle-pin"><span class="toggle-knob"></span></div>
+            </div>
+
+            <div class="setting-row-stacked">
+              <div class="setting-row-flex">
+                <span class="setting-label-bold">Allow in Incognito</span>
+                <div class="toggle-switch" id="toggle-incognito"><span class="toggle-knob"></span></div>
+              </div>
+              <div class="setting-subtext">Warning: Google Chrome cannot prevent extensions from recording browsing history.</div>
+            </div>
+
+            <div class="setting-row-flex highlight-green" id="row-file">
+              <span class="setting-label-bold">Allow access to file URLs</span>
+              <div class="toggle-switch" id="toggle-file"><span class="toggle-knob"></span></div>
+            </div>
+
+            <div class="setting-row-flex">
+              <span class="setting-label-bold">Collect errors</span>
+              <div class="toggle-switch on" id="toggle-errors"><span class="toggle-knob"></span></div>
+            </div>
+          </div>
+
+          <!-- Animated Pointer / Cursor -->
+          <div class="anim-cursor" id="seq-cursor">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M 5.5 3.5 L 18.5 11.5 L 12.5 13.5 L 16.5 20.5 L 14 22 L 10 15 L 5.5 18.5 V 3.5 Z" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
         </div>
       </div>
     </div>
-  </section>
-
-  <section class="slide" id="setup" data-title="Set up">
-    <div class="wrap">
-      <p class="eyebrow">06 · Set up, once</p>
-      <h2 class="display">One minute.</h2>
-      <ol class="steps">
-        <li id="step-install" class="web-only">
-          <span class="num"></span>
-          <div>
-            <h3>Install Retouch</h3>
-            <p>One click from the Chrome Web Store. Prefer to see the code first? The latest release on GitHub is the same files: unzip, open <code>chrome://extensions</code>, switch on Developer mode, <b>Load unpacked</b>.</p>
-            <div class="row"><a class="pill primary store-link" href="#" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a><a class="pill releases-link" href="#" target="_blank" rel="noopener">Download the zip</a></div>
-          </div>
-        </li>
-        <li id="step-access">
-          <span class="num"></span>
-          <div>
-            <h3>Let Retouch see local files</h3>
-            <p>Chrome hides files on your disk from extensions until you allow it. Open Retouch's details and switch on <b>Allow access to file URLs</b>.</p>
-            <div class="row"><button class="pill ext-only" id="open-details">Open Retouch details</button><span class="state ext-only" id="access-state">Checking…</span></div>
-          </div>
-        </li>
-        <li id="step-restart">
-          <span class="num"></span>
-          <div>
-            <h3>Restart Chrome</h3>
-            <p>Chrome applies that switch only after a restart. Quit it, open it, come back to this page.</p>
-          </div>
-        </li>
-        <li id="step-practice">
-          <span class="num"></span>
-          <div>
-            <h3>Get a practice page</h3>
-            <p>Retouch drops a small tutorial page into a <b>Retouch</b> folder in your Downloads and opens it. Everything on it is there to be edited.</p>
-            <div class="row"><button class="pill primary ext-only" id="make-practice">Create my practice page</button><span class="state" id="practice-state"></span><span class="state web-only">Available once Retouch is installed. Click its icon in the toolbar and choose the tour.</span></div>
-          </div>
-        </li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="slide" id="go" data-title="Go">
-    <div class="wrap center">
-      <p class="eyebrow">07 · Go</p>
-      <h2 class="giant"><span class="word">Try</span> <span class="word thin">it.</span></h2>
-      <p class="lede">Open any HTML file your AI made, click the Retouch icon, fix the thing.</p>
-      <div class="row center"><button class="pill primary big ext-only" id="cta-bottom">Create my practice page</button><a class="pill primary big web-only store-link" href="#" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a></div>
-      <p class="fine">Chrome, Edge, Brave and Arc. Files on your disk only. Nothing leaves your machine.</p>
-      <p class="fine"><a href="https://fastretouch.com/about.html">Made by Kamanashish Roy</a> · <a class="repo-link" href="#" target="_blank" rel="noopener">Open source on GitHub</a> · <a href="https://fastretouch.com/privacy.html">Privacy</a> · Support: <a href="https://x.com/doubts" target="_blank" rel="noopener">@doubts on X</a> or <a href="mailto:hello@fastretouch.com">hello@fastretouch.com</a></p>
-    </div>
-  </section>
-
+  </div>
 </main>
+
+<!-- AI Use-Case Chips Marquee Slider (Yellow Caution Tape Style, Slanted, Left-to-Right) -->
+<div class="usecases-slider-container">
+  <div class="usecases-slider-label">Why people use FastRetouch</div>
+  <div class="usecases-slider-wrapper">
+    <div class="usecases-slider-track">
+      <span class="chip-item">Landing pages</span>
+      <span class="chip-item">Dashboards</span>
+      <span class="chip-item">Reports</span>
+      <span class="chip-item">Presentations</span>
+      <span class="chip-item">Microsites</span>
+      <span class="chip-item">Internal tools</span>
+      <span class="chip-item">Prototypes</span>
+      <span class="chip-item">Data visualizations</span>
+      <span class="chip-item">Marketing pages</span>
+      <span class="chip-item">Content</span>
+      <span class="chip-item">Web apps</span>
+      <span class="chip-item">Email templates</span>
+      <!-- Duplicate set for seamless infinite loop -->
+      <span class="chip-item">Landing pages</span>
+      <span class="chip-item">Dashboards</span>
+      <span class="chip-item">Reports</span>
+      <span class="chip-item">Presentations</span>
+      <span class="chip-item">Microsites</span>
+      <span class="chip-item">Internal tools</span>
+      <span class="chip-item">Prototypes</span>
+      <span class="chip-item">Data visualizations</span>
+      <span class="chip-item">Marketing pages</span>
+      <span class="chip-item">Content</span>
+      <span class="chip-item">Web apps</span>
+      <span class="chip-item">Email templates</span>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-left">
+    <span>© Retouch</span>
+    <span>·</span>
+    <span>Made by Kamanashish Roy</span>
+  </div>
+  <div class="footer-right">
+    <a href="https://fastretouch.com/about.html" target="_blank" rel="noopener">About</a>
+    <a href="https://x.com/doubts" target="_blank" rel="noopener">@doubts on X</a>
+  </div>
+</footer>
+
 <script src="welcome.js"></script>
 </body>
 </html>

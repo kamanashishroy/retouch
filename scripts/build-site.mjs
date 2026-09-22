@@ -1,15 +1,17 @@
-// Builds the public site for fastretouch.com from the extension's own tour. One source, two homes.
+// Builds the public site for fastretouch.com from site-src/homepage.html, the marketing pitch.
+// The extension's own extension/welcome.html (post-install setup) is a separate page and never ships here.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ext = path.join(root, 'extension');
+const siteSrc = path.join(root, 'site-src');
 const out = path.join(root, 'site');
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 
-let html = fs.readFileSync(path.join(ext, 'welcome.html'), 'utf8');
+let html = fs.readFileSync(path.join(siteSrc, 'homepage.html'), 'utf8');
 const meta = `
 <meta name="description" content="Retouch is a free, open-source Chrome extension that fixes the HTML your AI wrote. Open the file, click the text, save. Nothing leaves your machine.">
 <meta name="theme-color" content="#0b0b0d">
@@ -33,18 +35,19 @@ const meta = `
 <link rel="apple-touch-icon" href="icons/128.png">
 <link rel="canonical" href="https://fastretouch.com/">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Retouch","applicationCategory":"BrowserApplication","operatingSystem":"Chrome, Edge, Brave, Arc","url":"https://fastretouch.com/","installUrl":"https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh","downloadUrl":"https://github.com/kamanashishroy/retouch/releases/latest","softwareVersion":"0.2.0","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Kamanashish Roy","url":"https://fastretouch.com/about.html"},"description":"A Chrome extension that fixes the HTML your AI wrote: click the text, change it, save the file in place."}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Retouch","applicationCategory":"BrowserApplication","operatingSystem":"Chrome, Edge, Brave, Arc","url":"https://fastretouch.com/","installUrl":"https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh","downloadUrl":"https://github.com/kamanashishroy/retouch/releases/latest","softwareVersion":"0.3.0","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Kamanashish Roy","url":"https://fastretouch.com/about.html"},"description":"A Chrome extension that fixes the HTML your AI wrote: click the text, change it, save the file in place."}
 </script>`;
 html = html.replace('<title>Retouch</title>', '<title>Retouch · fix the HTML your AI wrote</title>' + meta);
 fs.writeFileSync(path.join(out, 'index.html'), html);
-for (const f of ['welcome.css', 'welcome.js', 'practice.html']) fs.copyFileSync(path.join(ext, f), path.join(out, f));
+for (const f of ['homepage.css', 'homepage.js']) fs.copyFileSync(path.join(siteSrc, f), path.join(out, f));
+fs.copyFileSync(path.join(ext, 'practice.html'), path.join(out, 'practice.html'));
 for (const dir of ['icons', 'fonts']) {
   fs.mkdirSync(path.join(out, dir), { recursive: true });
   for (const f of fs.readdirSync(path.join(ext, dir))) fs.copyFileSync(path.join(ext, dir, f), path.join(out, dir, f));
 }
-// Extra site-only pages (about, etc.) live in site-src/ and ship as they are.
-const extra = path.join(root, 'site-src');
-if (fs.existsSync(extra)) for (const f of fs.readdirSync(extra)) fs.copyFileSync(path.join(extra, f), path.join(out, f));
+// Extra site-only pages (about, privacy, etc.) live in site-src/ and ship as they are.
+const skip = new Set(['homepage.html', 'homepage.css', 'homepage.js']);
+for (const f of fs.readdirSync(siteSrc)) { if (!skip.has(f)) fs.copyFileSync(path.join(siteSrc, f), path.join(out, f)); }
 fs.writeFileSync(path.join(out, 'CNAME'), 'fastretouch.com\n');
 fs.writeFileSync(path.join(out, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: https://fastretouch.com/sitemap.xml\n');
 const today = new Date().toISOString().slice(0, 10);

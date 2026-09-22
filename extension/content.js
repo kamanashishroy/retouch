@@ -7,7 +7,11 @@
 (function () {
   if (window === window.top || window.__retouch) return;
   const EXT_ORIGIN = 'chrome-extension://' + chrome.runtime.id;
-  const state = { editing: false, edited: new Map(), images: new Map(), hover: null, styled: false, palette: null, pending: new Map(), pop: null, savedRange: null, menu: null, imgPanel: null, imgTarget: null };
+  const state = {
+    editing: false, edited: new Map(), images: new Map(), theme: new Map(), hover: null, styled: false, palette: null,
+    pending: new Map(), pop: null, savedRange: null, menu: null, imgPanel: null, imgTarget: null,
+    promptMode: false, promptHover: null, pins: new Map(), pinTargets: new Map(), pinSeq: 0, overlay: null, activeCard: null, rafQueued: false
+  };
   window.__retouch = state;
 
   const send = (msg) => window.parent.postMessage(Object.assign({ retouch: true }, msg), EXT_ORIGIN);
@@ -103,6 +107,44 @@
       #retouch-pop .chip { display: inline-block; background: #fff; color: #1d1d1f; padding: 3px 10px; border-radius: 999px; line-height: 1.3; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       #retouch-pop input { all: initial; font: inherit; font-weight: 500; color: #f5f5f7; background: rgba(255,255,255,.12); border-radius: 999px; padding: 0 14px; height: 32px; width: 250px; transition: box-shadow .16s ease; }
       #retouch-pop input:focus { box-shadow: 0 0 0 2px rgba(244,192,95,.8); }
+      /* ---------- Prompt mode: pointing, pins and the request card ---------- */
+      html.retouch-prompt, html.retouch-prompt * { cursor: crosshair !important; }
+      html.retouch-prompt [data-retouch-prompt-hover] {
+        outline: 2px solid color-mix(in srgb, color-mix(in srgb, #f4c05f 78%, currentColor) 60%, transparent);
+        outline-offset: 4px; border-radius: 2px;
+      }
+      #retouch-prompt-overlay { position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 2147483647; cursor: auto; }
+      .retouch-pin {
+        all: initial; position: absolute; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; color: #fff;
+        font: 700 11px/1 RetouchUrbanist, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        box-shadow: 0 2px 8px rgba(0,0,0,.35); transition: transform .18s cubic-bezier(.34,1.4,.44,1);
+      }
+      .retouch-pin:hover { transform: scale(1.14); }
+      #retouch-card {
+        all: initial; position: absolute; width: 320px; padding: 12px; border-radius: 18px; box-sizing: border-box;
+        color: #f5f5f7; cursor: auto;
+        background: linear-gradient(115deg, rgba(154,92,163,.42), rgba(217,179,226,.22) 45%, rgba(244,192,95,.34)), rgba(22,22,25,.72);
+        -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+        box-shadow: 0 14px 44px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.16);
+        font: 13px/1.35 RetouchUrbanist, -apple-system, BlinkMacSystemFont, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+      }
+      #retouch-card .head { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.62); margin-bottom: 8px; overflow-wrap: anywhere; }
+      #retouch-card textarea {
+        all: initial; box-sizing: border-box; display: block; width: 100%; min-height: 64px; resize: vertical;
+        font: inherit; color: #f5f5f7; background: rgba(255,255,255,.12); border-radius: 12px; padding: 8px 10px;
+      }
+      #retouch-card textarea:focus { box-shadow: 0 0 0 2px rgba(244,192,95,.8); }
+      #retouch-card textarea::placeholder { color: rgba(255,255,255,.5); }
+      #retouch-card .foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 6px; height: 20px; }
+      #retouch-card .hint { font-size: 11px; color: rgba(255,255,255,.55); opacity: 0; transition: opacity .16s ease; }
+      #retouch-card .foot:hover .hint { opacity: 1; }
+      #retouch-card .del {
+        all: initial; cursor: pointer; width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
+        align-items: center; justify-content: center; color: rgba(255,255,255,.7); font-size: 11px;
+        transition: background .16s ease, color .16s ease;
+      }
+      #retouch-card .del:hover { background: rgba(255,255,255,.16); color: #fff; }
       @media (prefers-reduced-motion: reduce) { #retouch-pop, #retouch-pop *, [data-retouch-saved] { transition: none !important; animation: none !important; } }
     `;
     (document.head || document.documentElement).appendChild(style);
@@ -122,6 +164,31 @@
     let n;
     while ((n = w.nextNode())) out.push(n);
     return out;
+  }
+  // The nearest preceding text of 3+ characters outside `exclude`, used to disambiguate an element
+  // whose text appears more than once. Shared by collect() (element changes) and the Prompt collector
+  // (pins), so both locate elements in the source the same way.
+  function anchorNodeBefore(el, exclude, pool) {
+    const allText = pool || textNodes(document.body || document.documentElement);
+    for (let j = allText.length - 1; j >= 0; j--) {
+      const t = allText[j];
+      if (!(el.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_PRECEDING)) continue;
+      if (exclude && exclude.some((e) => e.contains(t))) continue;
+      if (t.data.trim().length >= 3) return t;
+    }
+    return null;
+  }
+  function anchorBefore(el, exclude, pool) { const n = anchorNodeBefore(el, exclude, pool); return n ? n.data : ''; }
+  // { tag, firstText, lastText, anchor } for any element, the same shape collect() builds for element
+  // changes. Used by the Prompt collector to pin a block without putting it into the editing session.
+  function elementRecord(el) {
+    const tn = textNodes(el).filter((n) => n.data.trim());
+    return {
+      tag: el.tagName.toLowerCase(),
+      firstText: tn.length ? tn[0].data : null,
+      lastText: tn.length ? tn[tn.length - 1].data : null,
+      anchor: anchorBefore(el, [...state.edited.keys()])
+    };
   }
   // Text laid out as slots between the element's (recursive) child elements, plus a skeleton of
   // that structure. Same skeleton means the edit only touched text.
@@ -288,6 +355,7 @@
       img.toggleAttribute('data-retouch-changed', n > 0);
       count += n;
     }
+    count += state.theme.size;
     send({ type: 'changes', count, structural });
   }
   function onInput() { refresh(); positionPopover(); }
@@ -297,17 +365,6 @@
   function collect() {
     const editedEls = [...state.edited.keys()].sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
     const allText = textNodes(document.body || document.documentElement);
-    const insideEdited = (node) => editedEls.some((el) => el.contains(node));
-    const anchorNodeBefore = (el) => {
-      for (let j = allText.length - 1; j >= 0; j--) {
-        const t = allText[j];
-        if (!(el.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_PRECEDING)) continue;
-        if (insideEdited(t)) continue;
-        if (t.data.trim().length >= 3) return t;
-      }
-      return null;
-    };
-    const anchorBefore = (el) => { const n = anchorNodeBefore(el); return n ? n.data : ''; };
     const between = (a, b) => (n) => (!a || (a.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING)) && (b.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_PRECEDING);
     const changes = [];
     let structural = 0;
@@ -315,9 +372,9 @@
       const rec = state.edited.get(el);
       const d = diffElement(el, rec);
       if (d.kind === 'structural') { structural++; continue; }
-      const anchor = anchorBefore(el);
+      const anchor = anchorBefore(el, editedEls, allText);
       if (d.kind === 'insert') {
-        const aNode = anchorNodeBefore(el);
+        const aNode = anchorNodeBefore(el, editedEls, allText);
         const inRange = between(aNode, el);
         let skip = 0;
         for (const c of document.body.getElementsByTagName(el.tagName)) if (c !== el && !isUi(c) && inRange(c) && emptyInSource(c)) skip++;
@@ -333,7 +390,7 @@
     const imgs = [...state.images.keys()].sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
     for (const img of imgs) {
       const rec = state.images.get(img);
-      const aNode = anchorNodeBefore(img);
+      const aNode = anchorNodeBefore(img, editedEls, allText);
       const anchor = aNode ? aNode.data : '';
       const inRange = between(aNode, img);
       const originalSrcOf = (c) => (state.images.get(c) ? state.images.get(c).originalSrc : c.getAttribute('src'));
@@ -354,6 +411,9 @@
         changes.push({ kind: 'attr', tag: 'img', attr: 'alt', before, after: rec.newAlt, skip, anchor });
       }
     }
+    for (const rec of state.theme.values()) {
+      changes.push({ kind: 'style', property: rec.property, before: rec.before, after: rec.after, skip: rec.skip || 0, media: rec.media || null });
+    }
     return { changes, structural };
   }
   function resetImages() {
@@ -370,9 +430,11 @@
   function reset() {
     for (const [el, rec] of state.edited) if (el.innerHTML !== rec.html) el.innerHTML = rec.html;
     resetImages();
+    resetTheme();
     endAll();
   }
   function commit(renames) {
+    commitTheme();
     for (const [img, rec] of state.images) {
       if (rec.pendingId && renames && renames[rec.pendingId]) rec.newSrc = renames[rec.pendingId];
       if (rec.newSrc != null) { img.setAttribute('src', rec.newSrc); rec.originalSrc = rec.newSrc; }
@@ -623,7 +685,9 @@
         const text = await fetchViaViewer(sheet.href);
         if (text) {
           rawTexts.push(text);
-          if (!list) { try { const s = new CSSStyleSheet(); s.replaceSync(text); list = s.cssRules; } catch (e) { /* unparsable */ } }
+          // Constructed stylesheets reject @import (Chrome logs a warning per rule), and an import cannot
+          // be harvested anyway, so drop those lines before parsing.
+          if (!list) { try { const s = new CSSStyleSheet(); s.replaceSync(text.replace(/@import\b[^;]*;/g, '')); list = s.cssRules; } catch (e) { /* unparsable */ } }
         }
       }
       if (list) collectRules(list, rules);
@@ -690,6 +754,136 @@
       colors: [...byName.values()],
       fonts: [...fonts.values()].sort((a, b) => b.uses - a.uses)
     };
+  }
+
+
+  // ---------- the page's own CSS variables (the Theme panel) ----------
+  // Phase 1 (D29): custom properties declared on :root / html / body inside the page's own <style>
+  // blocks, including redefinitions inside @media. Linked sheets are listed but not editable.
+  const ROOT_SEL = /^(:root|html|body)$/i;
+  const rootSelector = (text) => String(text || '').split(',').some((s2) => ROOT_SEL.test(s2.trim()));
+
+  function themeRules(list, media, out) {
+    for (const r of list) {
+      if (r.type === CSSRule.STYLE_RULE) { if (rootSelector(r.selectorText)) out.push({ rule: r, media }); }
+      else if (r.type === CSSRule.MEDIA_RULE) themeRules(r.cssRules, r.media.mediaText || media, out);
+      else if (r.cssRules) themeRules(r.cssRules, media, out);
+    }
+  }
+
+  // A value is a color when the browser accepts it for `color` and it is not simply inherited.
+  function isColorValue(probe, value) {
+    probe.style.color = '';
+    probe.style.color = 'rgb(1, 2, 3)';
+    const base = probe.style.color;
+    probe.style.color = '';
+    probe.style.color = value;
+    const got = probe.style.color;
+    return !!got && got !== base && !/^(inherit|initial|unset|currentcolor)$/i.test(value.trim());
+  }
+
+  function harvestTheme() {
+    const probe = document.createElement('span');
+    const found = [];
+    for (const sheet of document.styleSheets) {
+      if (sheet.ownerNode && sheet.ownerNode.matches && sheet.ownerNode.matches(UI)) continue;
+      const inline = !!(sheet.ownerNode && sheet.ownerNode.tagName === 'STYLE');
+      let list = null;
+      try { list = sheet.cssRules; } catch (e) { list = null; }
+      if (!list) continue;
+      const rules = [];
+      themeRules(list, null, rules);
+      for (const { rule, media } of rules) {
+        for (const property of Array.from(rule.style)) {
+          if (!property.startsWith('--')) continue;
+          const value = rule.style.getPropertyValue(property).trim();
+          if (!value || !isColorValue(probe, value)) continue;
+          found.push({ property, value, media: media || null, source: inline ? 'inline' : 'linked', href: sheet.href || null });
+        }
+      }
+    }
+    // `skip` counts earlier inline declarations of the same property in the same media context, which
+    // is exactly the occurrence the patcher counts when it walks the <style> blocks in file order.
+    const seen = new Map();
+    for (const item of found) {
+      if (item.source !== 'inline') { item.skip = 0; continue; }
+      const key = item.property + '|' + (item.media || '');
+      const n = seen.get(key) || 0;
+      item.skip = n;
+      seen.set(key, n + 1);
+    }
+    return found;
+  }
+
+  // One injected <style> holds every live preview, so nothing on disk changes before Save. It comes
+  // last in the head, so it wins on order; `except` keeps a change to the light value from also
+  // repainting the page when the dark block is the one actually in force.
+  function renderThemePreview() {
+    let node = document.getElementById('retouch-theme-preview');
+    if (!state.theme.size) { if (node) node.remove(); return; }
+    if (!node) {
+      node = document.createElement('style');
+      node.id = 'retouch-theme-preview';
+      node.setAttribute('data-retouch-ui', '');
+      (document.head || document.documentElement).appendChild(node);
+    }
+    const groups = new Map();
+    for (const rec of state.theme.values()) {
+      const except = rec.media ? [] : (rec.except || []);
+      const key = (rec.media || '') + '\u0000' + except.join('\u0000');
+      if (!groups.has(key)) groups.set(key, { media: rec.media || null, except, decls: [] });
+      groups.get(key).decls.push(`  ${rec.property}: ${rec.after};`);
+    }
+    const parts = [];
+    for (const g of groups.values()) {
+      let block = `:root {\n${g.decls.join('\n')}\n}`;
+      for (const q of g.except) block = `@media not all and ${q} {\n${block}\n}`;
+      if (g.media) block = `@media ${g.media} {\n${block}\n}`;
+      parts.push(block);
+    }
+    node.textContent = parts.join('\n');
+  }
+
+  function themePreview(m) {
+    const key = m.property + '|' + (m.media || '');
+    if (m.value == null) state.theme.delete(key);
+    else state.theme.set(key, { property: m.property, media: m.media || null, before: m.before, after: m.value, skip: m.skip || 0, except: m.except || [] });
+    renderThemePreview();
+    refresh();
+  }
+
+  function resetTheme() {
+    state.theme.clear();
+    renderThemePreview();
+  }
+
+  // After a save the file holds the new values, so write them into the page's own rules too and drop
+  // the preview. A fresh harvest then reports the saved value as the original, as it should.
+  function commitTheme() {
+    if (!state.theme.size) return;
+    const targets = new Map();
+    for (const sheet of document.styleSheets) {
+      if (!(sheet.ownerNode && sheet.ownerNode.tagName === 'STYLE')) continue;
+      if (sheet.ownerNode.matches && sheet.ownerNode.matches(UI)) continue;
+      let list = null;
+      try { list = sheet.cssRules; } catch (e) { continue; }
+      if (!list) continue;
+      const rules = [];
+      themeRules(list, null, rules);
+      for (const { rule, media } of rules) {
+        for (const property of Array.from(rule.style)) {
+          if (!property.startsWith('--')) continue;
+          const key = property + '|' + (media || '');
+          if (!targets.has(key)) targets.set(key, []);
+          targets.get(key).push(rule);
+        }
+      }
+    }
+    for (const [key, rec] of state.theme) {
+      const rule = (targets.get(key) || [])[rec.skip || 0];
+      if (rule) rule.style.setProperty(rec.property, rec.after);
+    }
+    resetTheme();
   }
 
   // ---------- popover ----------
@@ -911,6 +1105,179 @@
     state.imgTarget = null;
   }
 
+  // ---------- Prompt mode: pointing, pinning and the request card ----------
+  // "Block" per the spec: the nearest ancestor that is one of these, or a link only when its own
+  // parent is not already a block, or a div with visible text. Never html or body.
+  const PROMPT_TAGS = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'td', 'th', 'blockquote', 'pre', 'figure', 'img', 'button', 'section', 'article', 'header', 'footer', 'nav', 'aside']);
+  function isPromptBlock(el) {
+    if (!el || el.nodeType !== 1 || el.matches(UI)) return false;
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'a') return !isPromptBlock(el.parentElement);
+    if (PROMPT_TAGS.has(tag)) return true;
+    return tag === 'div' && isTextBearing(el);
+  }
+  function pickPromptTarget(node) {
+    let target = node.nodeType === 1 ? node : node.parentElement;
+    if (isUi(target)) return null;
+    while (target && target !== document.documentElement) {
+      if (target === document.body) return null;
+      if (isPromptBlock(target)) return target;
+      target = target.parentElement;
+    }
+    return null;
+  }
+  // D21: marks derive from the page's own text color, the same formula the editing marks use.
+  const markColorFor = (el) => `color-mix(in srgb, #f4c05f 78%, ${getComputedStyle(el).color})`;
+  function previewOf(el) {
+    const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    return text.length > 80 ? text.slice(0, 80) : text;
+  }
+  function ensureOverlay() {
+    if (state.overlay) return state.overlay;
+    state.overlay = el('div', { id: 'retouch-prompt-overlay', 'data-retouch-ui': '' });
+    document.body.appendChild(state.overlay);
+    return state.overlay;
+  }
+  const pinEl = (id) => state.overlay && state.overlay.querySelector(`.retouch-pin[data-id="${id}"]`);
+  function queueReposition() {
+    if (state.rafQueued) return;
+    state.rafQueued = true;
+    requestAnimationFrame(() => { state.rafQueued = false; repositionPins(); });
+  }
+  function positionCard(card, target) {
+    const rect = target.getBoundingClientRect();
+    const w = card.offsetWidth || 320;
+    const h = card.offsetHeight || 140;
+    const x = Math.max(8, Math.min(rect.left + window.scrollX, window.scrollX + window.innerWidth - w - 8));
+    let y = rect.bottom + window.scrollY + 8;
+    if (y + h > window.scrollY + window.innerHeight - 8) y = Math.max(window.scrollY + 8, rect.top + window.scrollY - h - 8);
+    card.style.left = x + 'px';
+    card.style.top = y + 'px';
+  }
+  function repositionPins() {
+    for (const [id, target] of state.pinTargets) {
+      const pin = pinEl(id);
+      if (!pin) continue;
+      const rect = target.getBoundingClientRect();
+      pin.style.left = Math.round(rect.right + window.scrollX - 6) + 'px';
+      pin.style.top = Math.round(rect.top + window.scrollY - 6) + 'px';
+      if (state.activeCard && state.activeCard.id === id) positionCard(state.activeCard.el, target);
+    }
+  }
+  window.addEventListener('scroll', () => { if (state.promptMode) queueReposition(); }, true);
+  window.addEventListener('resize', () => { if (state.promptMode) queueReposition(); });
+  function renderPin(record, target) {
+    const overlay = ensureOverlay();
+    const pin = el('button', { class: 'retouch-pin', type: 'button', 'data-retouch-ui': '', 'data-id': record.id, text: String(record.number) });
+    pin.style.background = markColorFor(target);
+    pin.addEventListener('click', (e) => { e.stopPropagation(); openCard(record.id); });
+    overlay.appendChild(pin);
+    queueReposition();
+  }
+  // Closing persists what was typed and is idempotent: removing a focused textarea fires `blur`
+  // synchronously, and that handler lands back here while the first removal is still in progress.
+  function closeCard() {
+    const c = state.activeCard;
+    if (!c) return;
+    state.activeCard = null;
+    const text = c.ta.value.trim();
+    c.el.remove();
+    if (c.dropped || !text) { removePin(c.id); return; }
+    if (c.record.request !== text) { c.record.request = text; notifyChanged(); }
+  }
+  function buildCard(record, target) {
+    const card = el('div', { id: 'retouch-card', 'data-retouch-ui': '' });
+    const quoted = (record.selected || record.preview || record.alt || (record.tag === 'img' ? 'image' : record.tag)).slice(0, 80);
+    card.appendChild(el('div', { class: 'head', text: `${record.number} · "${quoted}"` }));
+    const ta = el('textarea', { placeholder: 'What should change here?' });
+    ta.value = record.request || '';
+    card.appendChild(ta);
+    const del = el('button', { class: 'del', type: 'button', title: 'Delete this request', 'aria-label': 'Delete this request', text: '✕' });
+    const hint = el('span', { class: 'hint', text: 'Enter to keep · Esc to drop' });
+    card.appendChild(el('div', { class: 'foot' }, [hint, del]));
+    const drop = () => { if (state.activeCard && state.activeCard.el === card) state.activeCard.dropped = true; closeCard(); };
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); closeCard(); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeCard(); }
+    });
+    // Switching windows also blurs; keep the card open then, so the request is not lost mid-thought.
+    ta.addEventListener('blur', () => { if (document.hasFocus()) closeCard(); });
+    del.addEventListener('click', (e) => { e.stopPropagation(); drop(); });
+    card.addEventListener('mousedown', (e) => { if (e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
+    ensureOverlay().appendChild(card);
+    positionCard(card, target);
+    setTimeout(() => ta.focus(), 0);
+    return { el: card, ta };
+  }
+  function openCard(id) {
+    if (state.activeCard && state.activeCard.id === id) return;
+    const record = state.pins.get(id);
+    const target = state.pinTargets.get(id);
+    if (!record || !target) return;
+    closeCard();
+    const built = buildCard(record, target);
+    state.activeCard = { id, el: built.el, ta: built.ta, record, dropped: false };
+  }
+  function notifyChanged() { send({ type: 'prompt-changed', items: [...state.pins.values()].map((r) => Object.assign({}, r)) }); }
+  function removePin(id) {
+    state.pins.delete(id);
+    state.pinTargets.delete(id);
+    const pin = pinEl(id);
+    if (pin) pin.remove();
+    if (state.activeCard && state.activeCard.id === id) state.activeCard = null;
+    notifyChanged();
+  }
+  function addPin(target, selected) {
+    const rec = elementRecord(target);
+    const number = ++state.pinSeq;
+    const id = 'pin' + number;
+    const record = {
+      id, number, tag: rec.tag, firstText: rec.firstText, lastText: rec.lastText, anchor: rec.anchor,
+      selected: selected || null, preview: previewOf(target), src: null, alt: null, request: '', createdAt: Date.now()
+    };
+    if (target.tagName === 'IMG') { record.src = target.getAttribute('src') || ''; record.alt = target.getAttribute('alt') || ''; }
+    state.pins.set(id, record);
+    state.pinTargets.set(id, target);
+    renderPin(record, target);
+    openCard(id);
+    notifyChanged();
+  }
+  // Re-finds each restored request by tag + firstText + lastText + anchor: the first exact match in
+  // document order. A request that no longer matches anything is kept, greyed, with `lost: true`.
+  function restorePrompt(items) {
+    closeCard();
+    for (const id of state.pins.keys()) { const pin = pinEl(id); if (pin) pin.remove(); }
+    state.pins.clear();
+    state.pinTargets.clear();
+    const candidates = [...document.body.querySelectorAll('*')].filter((e) => !isUi(e));
+    const used = new Set();
+    for (const item of items) {
+      const record = Object.assign({}, item, { lost: false });
+      const target = candidates.find((e) => {
+        if (used.has(e) || e.tagName.toLowerCase() !== record.tag) return false;
+        if (record.tag === 'img' && record.src && e.getAttribute('src') !== record.src) return false;
+        const rec = elementRecord(e);
+        return rec.firstText === record.firstText && rec.lastText === record.lastText && rec.anchor === record.anchor;
+      });
+      if (target) { used.add(target); state.pins.set(record.id, record); state.pinTargets.set(record.id, target); renderPin(record, target); }
+      else { record.lost = true; state.pins.set(record.id, record); }
+    }
+    state.pinSeq = items.reduce((max, i) => Math.max(max, i.number || 0), state.pinSeq);
+    notifyChanged();
+  }
+  function setPromptMode(on) {
+    if (state.promptMode === on) return;
+    ensureStyle();
+    state.promptMode = on;
+    document.documentElement.classList.toggle('retouch-prompt', on);
+    if (state.promptHover) { state.promptHover.removeAttribute('data-retouch-prompt-hover'); state.promptHover = null; }
+    closeCard();
+    for (const id of state.pins.keys()) { const pin = pinEl(id); if (pin) pin.remove(); }
+    if (state.overlay) { state.overlay.remove(); state.overlay = null; }
+    state.pins.clear();
+    state.pinTargets.clear();
+  }
+
   // ---------- events ----------
   function onKeydown(e) {
     const mod = e.metaKey || e.ctrlKey;
@@ -946,6 +1313,31 @@
     state.hover = t;
     if (t) { t.setAttribute('data-retouch-target', ''); markShape(t); }
   }, true);
+  document.addEventListener('mouseover', (e) => {
+    if (!state.promptMode || isUi(e.target)) return;
+    const t = pickPromptTarget(e.target);
+    if (t === state.promptHover) return;
+    if (state.promptHover) state.promptHover.removeAttribute('data-retouch-prompt-hover');
+    state.promptHover = t;
+    if (t) t.setAttribute('data-retouch-prompt-hover', '');
+  }, true);
+  document.addEventListener('click', (e) => {
+    if (!state.promptMode || isUi(e.target)) return;
+    if (e.target.closest && e.target.closest('a, button, input, label, summary')) e.preventDefault();
+    const block = pickPromptTarget(e.target);
+    if (!block) { send({ type: 'prompt-whole' }); return; }
+    const sel = document.getSelection();
+    let selected = null;
+    if (sel && sel.rangeCount && !sel.isCollapsed && sel.toString().trim()) {
+      const range = sel.getRangeAt(0);
+      if (block.contains(range.commonAncestorContainer)) selected = sel.toString().trim();
+    }
+    // Selecting the whole block is the same as pointing at it; keep the plainer wording.
+    if (selected && selected === previewOf(block)) selected = null;
+    // Clicking a block that already carries a request reopens that request instead of adding another.
+    if (!selected) for (const [id, t] of state.pinTargets) if (t === block && !state.pins.get(id).selected) { openCard(id); return; }
+    addPin(block, selected);
+  }, true);
 
   window.addEventListener('message', (e) => {
     if (e.origin !== EXT_ORIGIN || e.source !== window.parent) return;
@@ -954,13 +1346,22 @@
     switch (m.type) {
       case 'hello': send({ type: 'ready', href: location.href, title: document.title }); break;
       case 'edit': setEditing(!!m.on); break;
+      case 'prompt': setPromptMode(!!m.on); break;
+      case 'prompt-restore': restorePrompt(m.items || []); break;
+      case 'prompt-scroll': {
+        const target = state.pinTargets.get(m.id);
+        if (target) { target.scrollIntoView({ block: 'center', behavior: 'smooth' }); setTimeout(() => openCard(m.id), 260); }
+        break;
+      }
       case 'collect': send(Object.assign({ type: 'collected' }, collect())); break;
       case 'reset': reset(); break;
+      case 'theme': send({ type: 'theme', items: harvestTheme() }); break;
+      case 'themePreview': themePreview(m); break;
       case 'commit': commit(m.renames || null); break;
       case 'fetch-result': { const r = state.pending.get(m.id); if (r) { state.pending.delete(m.id); r(m.text || null); } break; }
       case 'image-named': { const r = state.pending.get(m.id); if (r) { state.pending.delete(m.id); r(m.name || null); } break; }
     }
   });
-  window.__retouchDebug = { toggleTag, setLink, applyStyle, applyClass, harvest, collect, state };
+  window.__retouchDebug = { toggleTag, setLink, applyStyle, applyClass, harvest, harvestTheme, collect, state };
   send({ type: 'ready', href: location.href, title: document.title });
 })();

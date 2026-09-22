@@ -9,6 +9,10 @@
 //   attr     { tag, attr, before, after, skip, anchor }
 //            change one attribute on the (skip+1)th tag of that name after the anchor whose attribute
 //            currently equals `before` (or lacks it when `before` is null); quoting is preserved
+//   style    { property, before, after, skip, media }
+//            change the value of one CSS custom property inside the page's own <style> blocks: the
+//            (skip+1)th declaration of that property in the matching @media context. Only the value
+//            characters move; whitespace, `!important` and the semicolon stay as they were (D29)
 // `anchor` is the text of a nearby preceding text node, used to pick the right occurrence when the
 // located text appears more than once. Pure functions, no DOM, unit-tested under Node.
 (function (root) {
@@ -165,6 +169,23 @@
     return cursor;
   }
 
+  // Read-only lookup of an element's range, for callers that only want to point at it (the Prompt
+  // collector's line numbers). No side effects, unlike apply(): always searches from the top.
+  function locate(source, change) {
+    const tokens = tokenize(source);
+    const regions = tokens.filter((t) => t.type === 'text').map((t) => [t.start, t.end]);
+    const from = startAfterAnchor(source, change, 0, regions);
+    if (change.tag === 'img' && change.src) {
+      // Images have no text of their own, so find the tag whose src matches, preferring one after the anchor.
+      const hit = (start) => tokens.find((t) => t.type === 'tag' && !t.closing && t.name === 'img' && t.start >= start && (findAttr(source.slice(t.start, t.end), 'src') || {}).value === change.src);
+      const t = hit(from) || (from !== 0 ? hit(0) : null);
+      return t ? { start: t.start, end: t.end } : null;
+    }
+    let loc = locateElement(source, tokens, change, from);
+    if (loc.error === 'not-found' && from !== 0) loc = locateElement(source, tokens, change, 0);
+    return loc.error ? null : { start: loc.start, end: loc.end };
+  }
+
   // The (skip+1)th element of `tag` after `from` whose content has no text. Returns its content range.
   function locateEmpty(source, tokens, change, from) {
     let seen = 0;
@@ -217,11 +238,77 @@
     return { error: 'not-found' };
   }
 
+  // Declarations of `property` inside the page's own <style> blocks, in document order, each tagged
+  // with the prelude of the @media block it sits in (null at the top level). A brace-depth walk is
+  // enough here: we only need to know which at-rule we are inside, not to understand the CSS.
+  const ROOT_SEL = /^(:root|html|body)$/i;
+
+  function styleDeclarations(source, tokens, property) {
+    const out = [];
+    const esc = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    for (let k = 0; k < tokens.length; k++) {
+      const t = tokens[k];
+      if (t.type !== 'raw') continue;
+      const open = tokens[k - 1];
+      if (!open || open.type !== 'tag' || open.name !== 'style') continue;
+      const css = source.slice(t.start, t.end);
+      // Prelude stack: the text before each `{`, so the innermost @media is known at any point.
+      const stack = [];
+      let chunk = 0;
+      const re = new RegExp('(' + esc + ')(\\s*:\\s*)([^;}]*?)(\\s*(?:!important)?\\s*)(?=[;}])|[{}]', 'g');
+      let m;
+      while ((m = re.exec(css))) {
+        if (!m[1]) {
+          if (m[0] === '{') { stack.push(css.slice(chunk, m.index).trim()); chunk = re.lastIndex; }
+          else { stack.pop(); chunk = re.lastIndex; }
+          continue;
+        }
+        chunk = re.lastIndex;
+        if (/[\w-]/.test(css[m.index - 1] || '')) continue;
+        // Only declarations on :root, html or body count, the same rule the harvest applies to the
+        // CSSOM, so `skip` means the same occurrence on both sides. A `.hero { --accent: … }` above
+        // the :root block must not be the one we edit.
+        const selector = stack.filter((p) => p && !p.startsWith('@')).pop() || '';
+        if (!selector.split(',').some((part) => ROOT_SEL.test(part.trim()))) continue;
+        const at = stack.filter((p) => p.startsWith('@media')).pop() || null;
+        out.push({
+          media: at ? at.replace(/^@media\s*/, '').trim() : null,
+          value: m[3].trim(),
+          start: t.start + m.index + m[1].length + m[2].length,
+          end: t.start + m.index + m[1].length + m[2].length + m[3].length,
+        });
+      }
+    }
+    return out;
+  }
+
+  // Media queries are compared with whitespace removed, so the browser's normalised `mediaText`
+  // lines up with however the author spaced the query in the file.
+  const sameMedia = (a, b) => (a || '').replace(/\s+/g, '') === (b || '').replace(/\s+/g, '');
+
+  // The (skip+1)th declaration of the property in the change's media context whose value is `before`.
+  function locateStyle(source, tokens, change) {
+    const all = styleDeclarations(source, tokens, change.property);
+    const inContext = all.filter((d) => sameMedia(d.media, change.media));
+    const d = inContext[change.skip || 0];
+    if (!d || d.value !== (change.before || '').trim()) return { error: 'style-not-found' };
+    return { start: d.start, end: d.end };
+  }
+
   function apply(source, changes) {
     let out = source;
     let cursor = 0;
     const failures = [];
+    // Style changes go first and on their own: <style> blocks can sit anywhere in the file, so they
+    // must not move the cursor the text and element passes walk forward with.
     changes.forEach((change, index) => {
+      if (change.kind !== 'style') return;
+      const loc = locateStyle(out, tokenize(out), change);
+      if (loc.error) { failures.push({ index, before: change.before || '', reason: loc.error, property: change.property }); return; }
+      out = out.slice(0, loc.start) + change.after + out.slice(loc.end);
+    });
+    changes.forEach((change, index) => {
+      if (change.kind === 'style') return;
       const tokens = tokenize(out);
       const regions = tokens.filter((t) => t.type === 'text').map((t) => [t.start, t.end]);
       const from = startAfterAnchor(out, change, cursor, regions);
@@ -269,10 +356,11 @@
       case 'no-text': return 'One formatted element had no text of its own in the original, so Retouch cannot find it in the source.';
       case 'generated': return `The element containing “${shown}” has parts that a script added after the page loaded, so Retouch will not rewrite it.`;
       case 'empty-not-found': return `Could not find the empty <${f.tag}> in the source file to put your text into. It may be created by a script.`;
+      case 'style-not-found': return `Could not find ${f.property} with value “${shown}” in the page's own styles. The color may live in a separate CSS file, which Retouch cannot edit yet.`;
       case 'attr-not-found': return `Could not find the <${f.tag}> whose ${f.attr} is “${shown}” in the source file. It may be created by a script.`;
       default: return `Could not find “${shown}” in the source file. It is probably produced by a script; edit the script's data instead.`;
     }
   }
 
-  root.RetouchPatch = { apply, describeFailure, escapeHtml, textRegions, tokenize };
+  root.RetouchPatch = { apply, describeFailure, escapeHtml, textRegions, tokenize, locate };
 })(typeof self !== 'undefined' ? self : globalThis);

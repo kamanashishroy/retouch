@@ -18,10 +18,8 @@ Nothing leaves your machine. No server, no account, no upload. The full [privacy
 
 ## Install
 
-**[Add Retouch to Chrome](https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh)** from the Chrome Web Store, then:
-
-1. Open Retouch's Details on `chrome://extensions` and switch on **Allow access to file URLs**. Restart Chrome.
-2. Click the Retouch icon in the toolbar. The tour walks you through the rest and gives you a practice page.
+**[Add Retouch to Chrome](https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh)** from the Chrome Web Store. Installing opens a setup screen: switch on
+**Allow access to file URLs** on `chrome://extensions`, restart Chrome, then get a practice page.
 
 Prefer the source? Download the latest release zip, unzip it somewhere permanent, and on `chrome://extensions`
 switch on Developer mode and **Load unpacked** on that folder. Same files, no automatic updates.
@@ -32,7 +30,7 @@ Chrome, Edge, Brave and Arc. Local files only.
 
 - `extension/` is the extension. It has no build step; load it unpacked as is.
 - `node --test tests/` runs the unit tests for the source patcher and the style describer.
-- `node scripts/build-site.mjs` builds the website into `site/` from the extension's own tour.
+- `node scripts/build-site.mjs` builds the website into `site/` from `site-src/homepage.html`.
 
 ## License
 
