@@ -21,11 +21,20 @@
       <button id="edit" class="seg">Edit</button>
       <button id="prompt" class="seg">Prompt<span id="prompt-count" class="bubble" hidden aria-live="polite"></span></button>
     </div>
+    <div id="prompt-tools" class="segmented" role="group" aria-label="Prompt tool" hidden>
+      <button id="tool-pointer" class="seg active" title="Pointer mode: click any element" aria-label="Pointer mode: click any element">
+        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M1.5 1.5l3.5 9 2-3.5 3.5-2z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      </button>
+      <button id="tool-box" class="seg" title="Box tool: drag a region box" aria-label="Box tool: drag a region box">
+        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3" stroke-dasharray="2 1.5" fill="none"/></svg>
+      </button>
+    </div>
     <button id="colors" class="btn ghost" hidden title="Change the page's colors">Colors</button>
     <button id="discard" class="btn ghost" hidden>Discard</button>
     <button id="save" class="btn primary" hidden disabled title="Save (⌘S)">Save<span id="count" class="bubble" hidden aria-live="polite"></span></button>
-    <button id="prompt-done" class="btn ghost" hidden title="Leave Prompt mode; your requests are kept">Done</button>
-    <button id="copy-prompt" class="btn primary" hidden disabled title="Copy one prompt with every request, for your AI"><span id="copy-label">Copy prompt</span><span id="copy-count" class="bubble" hidden aria-live="polite"></span></button>
+    <button id="prompt-done" class="close" hidden title="Leave Prompt mode; your requests are kept" aria-label="Leave Prompt mode; your requests are kept">
+      <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M1.5 6l3.5 3.5 5.5-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    </button>
     <button id="exit" class="close" title="Leave Retouch and show the plain file" aria-label="Leave Retouch">
       <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
     </button>
@@ -50,14 +59,20 @@
   <button id="collector-handle" class="collector-handle" title="Collapse the collector" aria-label="Collapse the collector"></button>
   <div id="collector-body" class="collector-body">
     <div id="collector-stale" class="collector-stale" hidden>
-      <span>The file changed on disk.</span>
+      <span>This page was updated outside Retouch.</span>
       <span class="row-actions">
         <button id="stale-reload" class="btn small primary">Clear and reload</button>
         <button id="stale-keep" class="btn small ghost">Keep</button>
       </span>
     </div>
-    <div id="collector-head" class="collector-head">Prompt collector</div>
+    <div id="collector-head" class="collector-head">
+      <span>Notes for your AI</span>
+      <button id="collector-close" class="collector-close" title="Close notes drawer" aria-label="Close notes drawer">
+        <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+      </button>
+    </div>
     <div id="collector-list" class="collector-list"></div>
+    <button id="copy-prompt" class="btn primary collector-btn" disabled title="Copy one prompt with every request, for your AI"><span id="copy-label">Copy instructions for AI</span><span id="copy-count" class="bubble" hidden aria-live="polite"></span></button>
     <div class="collector-foot">Paste the prompt into your AI. Reload when it's done.</div>
   </div>
 </div>

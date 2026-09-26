@@ -10,12 +10,15 @@ if (!IS_EXT) {
 }
 
 // 1. Check & display file URL access state
+let isFileAccessAllowed = false;
 const accessState = document.getElementById('access-state');
 function checkAccess() {
   if (!IS_EXT || !accessState) return;
   chrome.extension.isAllowedFileSchemeAccess((ok) => {
+    isFileAccessAllowed = !!ok;
     accessState.textContent = ok ? 'On. Retouch can see your files.' : 'Off. Switch it on in Chrome Settings, then restart Chrome.';
     accessState.className = 'state ' + (ok ? 'ok' : 'warn');
+    if (toggleFile) toggleFile.classList.toggle('on', isFileAccessAllowed);
   });
 }
 checkAccess();
@@ -85,7 +88,37 @@ if (makePracticeBtn) {
       if (item && item.state === 'complete' && item.filename) {
         const fileUrl = 'file://' + item.filename.replace(/\\/g, '/');
         const viewerUrl = chrome.runtime.getURL('viewer.html') + '?src=' + encodeURIComponent(fileUrl) + '&fresh=1';
-        chrome.tabs.create({ url: viewerUrl });
+
+        // Warm profile check: if a vault already covers this file, open viewer immediately
+        const match = typeof RetouchVault !== 'undefined' ? await RetouchVault.resolve(fileUrl) : null;
+        if (match) {
+          chrome.tabs.create({ url: viewerUrl });
+          return;
+        }
+
+        // Cold profile / first run: resolve folder grant on welcome screen before opening viewer tab
+        const confirmBox = document.getElementById('confirm-folder-box');
+        const confirmBtn = document.getElementById('confirm-folder');
+        if (confirmBox && confirmBtn) {
+          makePracticeBtn.hidden = true;
+          confirmBox.hidden = false;
+
+          confirmBtn.onclick = async () => {
+            confirmBtn.disabled = true;
+            try {
+              const segs = RetouchVault.segments(fileUrl);
+              const dir = await window.showDirectoryPicker({ mode: 'readwrite', id: 'retouch-practice', startIn: 'downloads' });
+              if (dir && segs.slice(0, -1).includes(dir.name)) {
+                await RetouchVault.add(dir, segs.slice(0, -1));
+              }
+            } catch (e) {
+              // Graceful fallback: user cancelled native picker (AbortError), open viewer tab anyway
+            }
+            chrome.tabs.create({ url: viewerUrl });
+          };
+        } else {
+          chrome.tabs.create({ url: viewerUrl });
+        }
       }
     } catch (err) {
       if (practiceState) {
@@ -166,7 +199,7 @@ if (cursor && toggleFile) {
 
     if (togglePin) togglePin.classList.toggle('on', pinOn);
     if (toggleIncognito) toggleIncognito.classList.toggle('on', incognitoOn);
-    if (toggleFile) toggleFile.classList.toggle('on', fileOn);
+    if (toggleFile) toggleFile.classList.toggle('on', isFileAccessAllowed || fileOn);
 
     requestAnimationFrame(animateMock);
   }

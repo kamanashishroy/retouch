@@ -8,14 +8,16 @@ const els = { frame: $('frame'), filename: $('filename'), status: $('status'), c
   edit: $('edit'), discard: $('discard'), save: $('save'), exit: $('exit'), error: $('error'), colors: $('colors'), theme: $('theme'),
   banner: $('banner'), bannerText: $('banner-text'), dismiss: $('dismiss'),
   prompt: $('prompt'), promptCount: $('prompt-count'), copyPrompt: $('copy-prompt'), copyLabel: $('copy-label'), copyCount: $('copy-count'), promptDone: $('prompt-done'), collectorHead: $('collector-head'),
-  collector: $('collector'), collectorHandle: $('collector-handle'), collectorBody: $('collector-body'), collectorList: $('collector-list'),
+  promptTools: $('prompt-tools'), toolPointer: $('tool-pointer'), toolBox: $('tool-box'),
+  collector: $('collector'), collectorHandle: $('collector-handle'), collectorClose: $('collector-close'), collectorBody: $('collector-body'), collectorList: $('collector-list'),
   collectorStale: $('collector-stale'), staleReload: $('stale-reload'), staleKeep: $('stale-keep'),
   dropzone: $('dropzone'), dropzoneText: $('dropzone-text'), dropmat: $('dropmat') };
 
 const state = { pendingGrant: null,
   editing: false, count: 0, structural: 0, ready: false, saving: false, lastKnownSource: null, pendingCollect: null, log: [],
   pendingImages: new Map(), pendingTheme: null,
-  promptMode: false, promptItems: [], wholeRequest: '', collectorCollapsed: false, activeItemId: null, wholeTa: null
+  promptMode: false, promptTool: 'pointer', promptItems: [], wholeRequest: '', collectorCollapsed: false, activeItemId: null, wholeTa: null,
+  pendingCapture: null, pendingRectResolve: null
 };
 const decodedPath = (() => { try { return decodeURIComponent(new URL(src).pathname); } catch (e) { return ''; } })();
 const fileName = decodedPath.split('/').pop();
@@ -81,6 +83,9 @@ function render() {
   els.save.disabled = pending === 0 || state.saving;
   els.copyPrompt.hidden = !state.promptMode;
   els.promptDone.hidden = !state.promptMode;
+  els.promptTools.hidden = !state.promptMode;
+  els.toolPointer.classList.toggle('active', state.promptTool === 'pointer');
+  els.toolBox.classList.toggle('active', state.promptTool === 'box');
   renderPromptCount();
   els.collector.hidden = !state.promptMode;
   els.collector.classList.toggle('collapsed', state.collectorCollapsed);
@@ -143,6 +148,15 @@ if (!/^file:\/\//i.test(src)) {
         savePromptStore();
         renderPromptCount();
         renderCollector();
+        break;
+      case 'prompt-region-saved':
+        // Only the id is kept — the box is re-measured fresh from content.js right before capture
+        // (see requestRegionRect below), since the user may scroll between saving the note and
+        // right-clicking to capture it, and a coordinate computed now would go stale.
+        state.pendingCapture = { id: m.id };
+        break;
+      case 'region-rect':
+        if (state.pendingRectResolve) { state.pendingRectResolve(m.rect); state.pendingRectResolve = null; }
         break;
       case 'prompt-whole':
         openWholePage();
@@ -249,18 +263,26 @@ function renderPromptCount() {
   els.copyCount.hidden = n === 0;
   els.copyCount.textContent = String(n);
   els.copyPrompt.disabled = n === 0 && !whole;
-  if (els.collectorHead) els.collectorHead.textContent = n ? `Prompt collector · ${n}` : 'Prompt collector';
+  if (els.collectorHead) els.collectorHead.textContent = n ? `Notes for your AI · ${n}` : 'Notes for your AI';
 }
-function locationLabel(item) {
-  const word = RetouchPrompt.wordFor(item.tag);
-  const cap = word.charAt(0).toUpperCase() + word.slice(1);
-  if (item.tag === 'img') return `${item.number} · Image "${(item.alt || item.src || '').slice(0, 40)}"`;
-  const quoted = (item.selected || item.preview || '').slice(0, 40);
-  return `${item.number} · ${cap} "${quoted}"`;
+function locationTag(item) {
+  if (item.kind === 'region') return 'REGION';
+  const WORDS = {
+    h1: 'HEADING', h2: 'HEADING', h3: 'HEADING', h4: 'HEADING', h5: 'HEADING', h6: 'HEADING',
+    p: 'PARAGRAPH', li: 'LIST ITEM', td: 'TABLE CELL', th: 'TABLE CELL', img: 'IMAGE',
+    button: 'BUTTON', a: 'LINK', section: 'SECTION', article: 'SECTION', header: 'SECTION', footer: 'SECTION'
+  };
+  return WORDS[item.tag] || (item.tag || 'BLOCK').toUpperCase();
+}
+function locationTitle(item) {
+  if (item.kind === 'region') return `${Math.round(item.box.width)}×${Math.round(item.box.height)}px`;
+  if (item.tag === 'img') return `“${(item.alt || item.src || 'image').slice(0, 50)}”`;
+  const quoted = (item.selected || item.preview || '').slice(0, 50);
+  return quoted ? `“${quoted}”` : '';
 }
 function renderCollector() {
   els.collectorList.textContent = '';
-  if (!state.promptItems.length) {
+  if (!state.promptItems.length && !state.wholeRequest) {
     const p = document.createElement('div');
     p.className = 'collector-empty';
     p.textContent = 'Click anything on the page to add it to your prompt.';
@@ -269,35 +291,112 @@ function renderCollector() {
   for (const item of state.promptItems) {
     const row = document.createElement('div');
     row.className = 'collector-row' + (item.lost ? ' lost' : '') + (item.id === state.activeItemId ? ' active' : '');
-    const loc = document.createElement('span');
-    loc.className = 'loc';
-    loc.textContent = locationLabel(item);
-    row.appendChild(loc);
-    const req = document.createElement('div');
-    req.className = 'req';
-    req.textContent = item.request || '';
-    row.appendChild(req);
+    
+    const head = document.createElement('div');
+    head.className = 'row-head';
+
+    const info = document.createElement('div');
+    info.className = 'row-info';
+
+    const tag = document.createElement('span');
+    tag.className = 'row-tag';
+    tag.textContent = locationTag(item);
+    info.appendChild(tag);
+
+    const title = locationTitle(item);
+    if (title) {
+      const titleEl = document.createElement('div');
+      titleEl.className = 'row-title';
+      titleEl.textContent = title;
+      info.appendChild(titleEl);
+    }
+    head.appendChild(info);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'row-del';
+    delBtn.type = 'button';
+    delBtn.title = 'Delete this request';
+    delBtn.ariaLabel = 'Delete this request';
+    delBtn.innerHTML = '<svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2.5 3.5h7M4.5 3.5V2a1 1 0 011-1h1a1 1 0 011 1v1.5M3.5 3.5v6.5a1 1 0 001 1h3a1 1 0 001-1v-6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      post({ type: 'prompt-remove', id: item.id });
+    });
+    head.appendChild(delBtn);
+    row.appendChild(head);
+
+    const reqTa = document.createElement('textarea');
+    reqTa.className = 'req-input';
+    reqTa.placeholder = 'What should change here?';
+    reqTa.value = item.request || '';
+    reqTa.addEventListener('click', (e) => e.stopPropagation());
+    reqTa.addEventListener('input', () => {
+      item.request = reqTa.value;
+    });
+    const commitEdit = () => {
+      const val = reqTa.value.trim();
+      post({ type: 'prompt-update', id: item.id, request: val });
+    };
+    reqTa.addEventListener('blur', commitEdit);
+    reqTa.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); reqTa.blur(); }
+    });
+    row.appendChild(reqTa);
+
     if (item.lost) {
       const note = document.createElement('span');
       note.className = 'lost-note';
       note.textContent = 'Not on this page any more';
       row.appendChild(note);
     }
-    row.addEventListener('click', () => {
-      if (item.lost) return;
+
+    row.addEventListener('mouseenter', () => { if (!item.lost) post({ type: 'prompt-hover', id: item.id }); });
+    row.addEventListener('mouseleave', () => { post({ type: 'prompt-hover', id: null }); });
+
+    row.addEventListener('click', (e) => {
+      if (item.lost || e.target === reqTa || e.target === delBtn || delBtn.contains(e.target)) return;
       state.activeItemId = item.id;
       renderCollector();
       post({ type: 'prompt-scroll', id: item.id });
     });
     els.collectorList.appendChild(row);
   }
+
+  // Whole page row
   const wholeRow = document.createElement('div');
   wholeRow.className = 'collector-row whole';
-  const wholeLoc = document.createElement('span');
-  wholeLoc.className = 'loc';
-  wholeLoc.textContent = 'Whole page';
-  wholeRow.appendChild(wholeLoc);
+
+  const wholeHead = document.createElement('div');
+  wholeHead.className = 'row-head';
+
+  const wholeInfo = document.createElement('div');
+  wholeInfo.className = 'row-info';
+  const wholeTag = document.createElement('span');
+  wholeTag.className = 'row-tag';
+  wholeTag.textContent = 'WHOLE PAGE';
+  wholeInfo.appendChild(wholeTag);
+  wholeHead.appendChild(wholeInfo);
+
+  if (state.wholeRequest) {
+    const wholeDel = document.createElement('button');
+    wholeDel.className = 'row-del';
+    wholeDel.type = 'button';
+    wholeDel.title = 'Clear whole page request';
+    wholeDel.ariaLabel = 'Clear whole page request';
+    wholeDel.innerHTML = '<svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2.5 3.5h7M4.5 3.5V2a1 1 0 011-1h1a1 1 0 011 1v1.5M3.5 3.5v6.5a1 1 0 001 1h3a1 1 0 001-1v-6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+    wholeDel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.wholeRequest = '';
+      savePromptStore();
+      renderCollector();
+      renderPromptCount();
+    });
+    wholeHead.appendChild(wholeDel);
+  }
+  wholeRow.appendChild(wholeHead);
+
   const wholeTa = document.createElement('textarea');
+  wholeTa.className = 'req-input';
   wholeTa.placeholder = 'What should change across the whole page?';
   wholeTa.value = state.wholeRequest || '';
   wholeTa.addEventListener('input', () => { state.wholeRequest = wholeTa.value; renderPromptCount(); });
@@ -338,14 +437,27 @@ els.staleKeep.addEventListener('click', () => {
 window.addEventListener('focus', () => { if (state.promptMode) checkStale(); });
 
 els.collectorHandle.addEventListener('click', () => { state.collectorCollapsed = !state.collectorCollapsed; render(); });
+if (els.collectorClose) els.collectorClose.addEventListener('click', () => { state.collectorCollapsed = true; render(); });
 els.prompt.addEventListener('click', togglePrompt);
 els.promptDone.addEventListener('click', togglePrompt);
+els.toolPointer.addEventListener('click', () => {
+  if (state.promptTool === 'pointer') return;
+  state.promptTool = 'pointer';
+  render();
+  post({ type: 'prompt-tool', tool: 'pointer' });
+});
+els.toolBox.addEventListener('click', () => {
+  if (state.promptTool === 'box') return;
+  state.promptTool = 'box';
+  render();
+  post({ type: 'prompt-tool', tool: 'box' });
+});
 els.copyPrompt.addEventListener('click', async () => {
   const text = RetouchPrompt.compile({ src, items: state.promptItems, whole: state.wholeRequest, source: state.lastKnownSource });
   try {
     await navigator.clipboard.writeText(text);
-    els.copyLabel.textContent = 'Copied';
-    setTimeout(() => { els.copyLabel.textContent = 'Copy prompt'; }, 1500);
+    els.copyLabel.textContent = 'Copied! Paste it into ChatGPT, Claude, or your AI editor.';
+    setTimeout(() => { els.copyLabel.textContent = 'Copy instructions for AI'; }, 2000);
   } catch (e) {
     let wrap = document.getElementById('collector-copy-fallback');
     if (!wrap) {
@@ -674,5 +786,74 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('beforeunload', (e) => {
   if (state.count + state.structural > 0) { e.preventDefault(); e.returnValue = ''; }
 });
+// Asks content.js for the pending region's current on-screen position (viewport-relative, already
+// accounting for scroll) — never reused from save time, since the user may have scrolled since.
+function requestRegionRect(id) {
+  return new Promise((resolve) => {
+    state.pendingRectResolve = resolve;
+    post({ type: 'get-region-rect', id });
+    setTimeout(() => { if (state.pendingRectResolve === resolve) { state.pendingRectResolve = null; resolve(null); } }, 2000);
+  });
+}
+if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (!msg) return;
+    if (msg.type === 'get-pending-capture') {
+      (async () => {
+        if (!state.pendingCapture) { sendResponse({ pending: null }); return; }
+        const rect = await requestRegionRect(state.pendingCapture.id);
+        if (!rect) { sendResponse({ pending: null }); return; }
+        const frameRect = els.frame.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        sendResponse({
+          pending: {
+            id: state.pendingCapture.id,
+            box: {
+              x: Math.round((frameRect.left + rect.left) * dpr),
+              y: Math.round((frameRect.top + rect.top) * dpr),
+              width: Math.round(rect.width * dpr),
+              height: Math.round(rect.height * dpr)
+            }
+          }
+        });
+      })();
+      return true;
+    }
+    if (msg.type === 'capture-no-pending') {
+      setStatus('No region note pending capture. Draw a box first.');
+      return;
+    }
+    if (msg.type === 'capture-failed') {
+      setStatus('Screenshot capture failed. Note kept as text.', 'error');
+      return;
+    }
+    if (msg.type === 'capture-result' && msg.dataUrl) {
+      const box = msg.box;
+      const id = msg.id;
+      state.pendingCapture = null;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, box.width);
+        canvas.height = Math.max(1, box.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, box.x, box.y, box.width, box.height, 0, 0, box.width, box.height);
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          try {
+            const screenshotPath = await RetouchVault.writeScreenshot(src, blob);
+            if (screenshotPath) {
+              setStatus(`Screenshot saved to ${screenshotPath}`);
+              post({ type: 'prompt-update-screenshot', id, screenshotPath });
+            }
+          } catch (e) {
+            console.warn('[retouch] Screenshot write error:', e);
+          }
+        }, 'image/png');
+      };
+      img.src = msg.dataUrl;
+    }
+  });
+}
 window.retouchDebug = { collect, state, diagnostics, requestTheme };
 render();

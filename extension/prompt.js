@@ -41,6 +41,19 @@
   }
 
   function itemLine(item, source) {
+    if (item.kind === 'region') {
+      const w = item.box ? Math.round(item.box.width) : 0;
+      const h = item.box ? Math.round(item.box.height) : 0;
+      let desc = `Region (${w}×${h}px area)`;
+      if (item.overlaps && item.overlaps.length) {
+        const list = item.overlaps.slice(0, 4).map((o) => `${o.tag}${o.preview ? ` "${o.preview.slice(0, 30)}"` : ''}`).join(', ');
+        desc += ` covering ${list}`;
+      }
+      if (item.screenshotPath) {
+        desc += ` (see ${item.screenshotPath})`;
+      }
+      return `${item.number}. ${desc}\n   → ${item.request}`;
+    }
     const loc = where(item, source);
     if (item.tag === 'img') {
       return `${item.number}. Image ${item.tag} ${loc}, ${srcLabel(item.src)}, alt "${item.alt || ''}"\n   → ${item.request}`;

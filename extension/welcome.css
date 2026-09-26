@@ -164,8 +164,23 @@ body.web .ext-only { display: none !important; }
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 12px;
+}
+
+.confirm-folder-box {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.confirm-folder-box[hidden] { display: none; }
+.confirm-desc {
+  font-size: 13.5px;
+  color: var(--pink);
+  margin: 0;
+  line-height: 1.45;
 }
 
 .link-btn {

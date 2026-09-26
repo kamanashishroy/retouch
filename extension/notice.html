@@ -42,6 +42,10 @@
   a.row, button.row { cursor: pointer; }
   a.row:hover, button.row:hover { background: var(--glass); }
   .row.pending { color: var(--secondary); }
+  .folder-open { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .folder-open .info { flex: 1; min-width: 0; }
+  .folder-open .chevron { font-size: 14px; color: var(--secondary); transition: transform .2s ease; flex: none; }
+  .folder-open.open .chevron { transform: rotate(90deg); }
   .path { display: block; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: var(--secondary); overflow-wrap: anywhere; }
   #vaults { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
   .folder-pages { margin-left: 10px; }

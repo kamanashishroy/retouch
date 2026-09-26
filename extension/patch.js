@@ -314,24 +314,87 @@
       const from = startAfterAnchor(out, change, cursor, regions);
       if (change.kind === 'empty') {
         let loc = locateEmpty(out, tokens, change, from);
-        if (loc.error && from !== cursor) loc = locateEmpty(out, tokens, change, cursor);
+        let usedFallback = false;
+        if (loc.error && from !== cursor) {
+          loc = locateEmpty(out, tokens, change, cursor);
+          usedFallback = true;
+        }
         if (loc.error) { failures.push({ index, before: '', reason: 'empty-not-found', tag: change.tag }); return; }
+        if (usedFallback) {
+          const again = locateEmpty(out, tokens, change, loc.end);
+          if (!again.error && (again.start !== loc.start || again.end !== loc.end)) {
+            failures.push({ index, before: '', reason: 'empty-ambiguous-anchor', tag: change.tag });
+            return;
+          }
+        } else if (change.anchor && change.anchor.trim()) {
+          const nextAnchor = findFrom(out, change.anchor, from, regions);
+          if (nextAnchor.index !== -1) {
+            const altFrom = nextAnchor.index + nextAnchor.matched.length;
+            const altLoc = locateEmpty(out, tokens, change, altFrom);
+            if (!altLoc.error && (altLoc.start !== loc.start || altLoc.end !== loc.end)) {
+              failures.push({ index, before: '', reason: 'empty-ambiguous-anchor', tag: change.tag });
+              return;
+            }
+          }
+        }
         out = out.slice(0, loc.start) + change.afterHtml + out.slice(loc.end);
         cursor = loc.start + change.afterHtml.length;
         return;
       }
       if (change.kind === 'attr') {
         let loc = locateAttr(out, tokens, change, from);
-        if (loc.error && from !== cursor) loc = locateAttr(out, tokens, change, cursor);
+        let usedFallback = false;
+        if (loc.error && from !== cursor) {
+          loc = locateAttr(out, tokens, change, cursor);
+          usedFallback = true;
+        }
         if (loc.error) { failures.push({ index, before: change.before || '', reason: 'attr-not-found', tag: change.tag, attr: change.attr }); return; }
+        if (usedFallback) {
+          const again = locateAttr(out, tokens, change, loc.end);
+          if (!again.error && (again.start !== loc.start || again.end !== loc.end)) {
+            failures.push({ index, before: change.before || '', reason: 'ambiguous-anchor', tag: change.tag, attr: change.attr });
+            return;
+          }
+        } else if (change.anchor && change.anchor.trim()) {
+          const nextAnchor = findFrom(out, change.anchor, from, regions);
+          if (nextAnchor.index !== -1) {
+            const altFrom = nextAnchor.index + nextAnchor.matched.length;
+            const altLoc = locateAttr(out, tokens, change, altFrom);
+            if (!altLoc.error && (altLoc.start !== loc.start || altLoc.end !== loc.end)) {
+              failures.push({ index, before: change.before || '', reason: 'ambiguous-anchor', tag: change.tag, attr: change.attr });
+              return;
+            }
+          }
+        }
         out = out.slice(0, loc.start) + loc.text + out.slice(loc.end);
         cursor = loc.start + loc.text.length;
         return;
       }
       if (change.kind === 'element') {
         let loc = locateElement(out, tokens, change, from);
-        if (loc.error === 'not-found' && from !== cursor) loc = locateElement(out, tokens, change, cursor);
+        let usedFallback = false;
+        if (loc.error === 'not-found' && from !== cursor) {
+          loc = locateElement(out, tokens, change, cursor);
+          usedFallback = true;
+        }
         if (loc.error) { failures.push({ index, before: change.firstText || '', reason: loc.error }); return; }
+        if (usedFallback) {
+          const again = locateElement(out, tokens, change, loc.end);
+          if (!again.error && (again.start !== loc.start || again.end !== loc.end)) {
+            failures.push({ index, before: change.firstText || '', reason: 'ambiguous-anchor' });
+            return;
+          }
+        } else if (change.anchor && change.anchor.trim()) {
+          const nextAnchor = findFrom(out, change.anchor, from, regions);
+          if (nextAnchor.index !== -1) {
+            const altFrom = nextAnchor.index + nextAnchor.matched.length;
+            const altLoc = locateElement(out, tokens, change, altFrom);
+            if (!altLoc.error && (altLoc.start !== loc.start || altLoc.end !== loc.end)) {
+              failures.push({ index, before: change.firstText || '', reason: 'ambiguous-anchor' });
+              return;
+            }
+          }
+        }
         out = out.slice(0, loc.start) + change.afterHtml + out.slice(loc.end);
         cursor = loc.start + change.afterHtml.length;
         return;
@@ -339,8 +402,29 @@
       const before = change.before || '';
       if (!before.trim()) { failures.push({ index, before, reason: 'empty' }); return; }
       let hit = findFrom(out, before, from, regions);
-      if (hit.index === -1 && from !== cursor) hit = findFrom(out, before, cursor, regions);
+      let usedFallback = false;
+      if (hit.index === -1 && from !== cursor) {
+        hit = findFrom(out, before, cursor, regions);
+        usedFallback = true;
+      }
       if (hit.index === -1) { failures.push({ index, before, reason: 'not-found' }); return; }
+      if (usedFallback) {
+        const again = findFrom(out, before, hit.index + hit.matched.length, regions);
+        if (again.index !== -1) {
+          failures.push({ index, before, reason: 'ambiguous-anchor' });
+          return;
+        }
+      } else if (change.anchor && change.anchor.trim()) {
+        const nextAnchor = findFrom(out, change.anchor, from, regions);
+        if (nextAnchor.index !== -1) {
+          const altFrom = nextAnchor.index + nextAnchor.matched.length;
+          const altHit = findFrom(out, before, altFrom, regions);
+          if (altHit.index !== -1 && altHit.index !== hit.index) {
+            failures.push({ index, before, reason: 'ambiguous-anchor' });
+            return;
+          }
+        }
+      }
       const replacement = escapeHtml(change.after);
       out = out.slice(0, hit.index) + replacement + out.slice(hit.index + hit.matched.length);
       cursor = hit.index + replacement.length;
@@ -356,8 +440,10 @@
       case 'no-text': return 'One formatted element had no text of its own in the original, so Retouch cannot find it in the source.';
       case 'generated': return `The element containing “${shown}” has parts that a script added after the page loaded, so Retouch will not rewrite it.`;
       case 'empty-not-found': return `Could not find the empty <${f.tag}> in the source file to put your text into. It may be created by a script.`;
+      case 'empty-ambiguous-anchor': return `More than one empty <${f.tag}> could match here, so Retouch can't tell which one you meant. Try filling the other one first, or add more surrounding text so Retouch can tell them apart.`;
       case 'style-not-found': return `Could not find ${f.property} with value “${shown}” in the page's own styles. The color may live in a separate CSS file, which Retouch cannot edit yet.`;
       case 'attr-not-found': return `Could not find the <${f.tag}> whose ${f.attr} is “${shown}” in the source file. It may be created by a script.`;
+      case 'ambiguous-anchor': return `More than one “${shown}” could match here, so Retouch can't tell which one you meant. Try selecting more surrounding text, or edit the other occurrence first.`;
       default: return `Could not find “${shown}” in the source file. It is probably produced by a script; edit the script's data instead.`;
     }
   }

@@ -262,3 +262,33 @@ test('style: only :root, html and body declarations count, so a component rule a
   assert.equal(only.ok, false);
   assert.equal(only.failures[0].reason, 'style-not-found');
 });
+
+test('element: replaces an element with markup using a different tag (e.g. paragraph to list)', () => {
+  const src = '<div><p>First item</p></div>';
+  const r = apply(src, [{
+    kind: 'element',
+    tag: 'p',
+    firstText: 'First item',
+    lastText: 'First item',
+    tagCounts: {},
+    afterHtml: '<ul><li>First item</li><li>Second item</li></ul>',
+    anchor: ''
+  }]);
+  assert.equal(r.ok, true);
+  assert.equal(r.source, '<div><ul><li>First item</li><li>Second item</li></ul></div>');
+});
+
+test('element: replaces a heading tag (h1 -> h2)', () => {
+  const src = '<section><h1>Title</h1></section>';
+  const r = apply(src, [{
+    kind: 'element',
+    tag: 'h1',
+    firstText: 'Title',
+    lastText: 'Title',
+    tagCounts: {},
+    afterHtml: '<h2>Title</h2>',
+    anchor: ''
+  }]);
+  assert.equal(r.ok, true);
+  assert.equal(r.source, '<section><h2>Title</h2></section>');
+});

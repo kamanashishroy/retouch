@@ -154,7 +154,10 @@ async function showVaults() {
   if (!vaults.length) { box.innerHTML = ''; return; }
   box.innerHTML = '<h2>Your folders</h2>' + vaults.map((v, i) => `
     <div class="folder">
-      <button class="row folder-open" data-i="${i}">${esc(v.handle.name)}<span class="path">/${esc(v.prefix.join('/'))}</span></button>
+      <button class="row folder-open" data-i="${i}">
+        <span class="info">${esc(v.handle.name)}<span class="path">/${esc(v.prefix.join('/'))}</span></span>
+        <span class="chevron">›</span>
+      </button>
       <div class="folder-pages" data-pages="${i}" hidden></div>
     </div>`).join('');
   box.querySelectorAll('.folder-open').forEach((btn) => {
@@ -164,8 +167,14 @@ async function showVaults() {
 }
 
 async function openVault(v, target) {
-  if (!target.hidden) { target.hidden = true; return; }
+  const btn = target.previousElementSibling;
+  if (!target.hidden) {
+    target.hidden = true;
+    if (btn) btn.classList.remove('open');
+    return;
+  }
   target.hidden = false;
+  if (btn) btn.classList.add('open');
   target.innerHTML = '<p class="muted">Opening…</p>';
   // The click is the gesture Chrome wants, so a stored handle can be re-granted right here.
   if ((await RetouchVault.ensurePermission(v.handle)) !== 'granted') {

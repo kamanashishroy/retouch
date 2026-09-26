@@ -5,6 +5,10 @@
   "version": "0.3.0",
   "description": "Edit the text of local HTML pages in place and save straight back to the file. Nothing leaves your machine.",
   "homepage_url": "https://fastretouch.com",
+  "permissions": [
+    "activeTab",
+    "contextMenus"
+  ],
   "host_permissions": [
     "file:///*"
   ],

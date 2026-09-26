@@ -38,6 +38,10 @@
 
         <div class="practice-link-row">
           <button class="link-btn ext-only" id="make-practice">Try practice page →</button>
+          <div id="confirm-folder-box" class="confirm-folder-box" hidden>
+            <p class="confirm-desc">Chrome will ask to confirm the Retouch folder — click it, then Select.</p>
+            <button class="pill primary ext-only" id="confirm-folder">Let Retouch save to this folder →</button>
+          </div>
           <span class="state" id="practice-state"></span>
         </div>
       </div>
@@ -156,6 +160,8 @@
   </div>
 </footer>
 
+<script src="idb.js"></script>
+<script src="vault.js"></script>
 <script src="welcome.js"></script>
 </body>
 </html>

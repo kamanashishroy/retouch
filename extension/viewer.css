@@ -13,6 +13,30 @@
   --pill-fg: #f5f5f7; --solid-bg: #fff; --solid-fg: #0b0b0d;
   --banner: rgba(24, 24, 27, .72);
   --tint: linear-gradient(115deg, rgba(154, 92, 163, .45), rgba(217, 179, 226, .28) 45%, rgba(244, 192, 95, .38));
+
+  /* Card & Drawer tokens (Default: Dark Mode) */
+  --card-shell-bg: #1e293b;
+  --card-shell-border: rgba(255, 255, 255, .12);
+  --card-shell-shadow: 0 20px 48px rgba(0, 0, 0, .45);
+  --card-fg: #f8fafc;
+  --card-secondary: #94a3b8;
+  --card-row-bg: #0f172a;
+  --card-row-border: #334155;
+  --card-row-hover-border: #475569;
+  --card-row-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+  --card-input-bg: #1e293b;
+  --card-input-border: #334155;
+  --card-input-fg: #f8fafc;
+  --card-input-placeholder: #64748b;
+  --card-close-hover: rgba(255, 255, 255, .1);
+  --card-del-hover-bg: rgba(239, 68, 68, .2);
+  --card-del-hover-fg: #f87171;
+  --cta-bg: #f4c05f;
+  --cta-fg: #0f172a;
+  --cta-hover-bg: #f5c873;
+  --cta-badge-bg: #0f172a;
+  --cta-badge-fg: #ffffff;
+  --collector-scrollbar-thumb: rgba(255, 255, 255, .2);
 }
 @media (prefers-color-scheme: light) {
   :root {
@@ -23,6 +47,30 @@
     --pill-fg: #1d1d1f; --solid-bg: #1d1d1f; --solid-fg: #fff;
     --banner: rgba(255, 255, 255, .75);
     --tint: linear-gradient(115deg, rgba(154, 92, 163, .28), rgba(217, 179, 226, .35) 45%, rgba(244, 192, 95, .3));
+
+    /* Card & Drawer tokens (Light Mode) */
+    --card-shell-bg: #ffffff;
+    --card-shell-border: rgba(0, 0, 0, .08);
+    --card-shell-shadow: 0 20px 48px rgba(0, 0, 0, .16);
+    --card-fg: #0f172a;
+    --card-secondary: #64748b;
+    --card-row-bg: #ffffff;
+    --card-row-border: #e2e8f0;
+    --card-row-hover-border: #cbd5e1;
+    --card-row-shadow: 0 4px 12px rgba(0, 0, 0, .03);
+    --card-input-bg: #ffffff;
+    --card-input-border: #e2e8f0;
+    --card-input-fg: #0f172a;
+    --card-input-placeholder: #94a3b8;
+    --card-close-hover: rgba(0, 0, 0, .06);
+    --card-del-hover-bg: #fee2e2;
+    --card-del-hover-fg: #ef4444;
+    --cta-bg: #111827;
+    --cta-fg: #ffffff;
+    --cta-hover-bg: #1f2937;
+    --cta-badge-bg: #f4c05f;
+    --cta-badge-fg: #0b0b0d;
+    --collector-scrollbar-thumb: rgba(0, 0, 0, .15);
   }
 }
 
@@ -92,8 +140,11 @@ body::before {
   background: var(--glass); color: var(--fg); transition: background .18s var(--ease), transform .22s var(--spring);
   margin-left: 6px;
 }
-.close:hover { background: var(--hover); transform: rotate(90deg); }
-.close:active { transform: rotate(90deg) scale(.92); }
+.close[hidden] { display: none; }
+#exit:hover { background: var(--hover); transform: rotate(90deg); }
+#exit:active { transform: rotate(90deg) scale(.92); }
+#prompt-done:hover { background: var(--hover); transform: scale(1.08); }
+#prompt-done:active { transform: scale(.94); }
 /* Notification-style count on the Save button */
 .bubble {
   position: absolute; top: -7px; right: -7px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; box-sizing: border-box;
@@ -192,6 +243,7 @@ body::before {
 
 /* Mode switch: Edit / Prompt, exactly one active or neither (D-prompt-collector) */
 .segmented { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-border); }
+.segmented[hidden] { display: none; }
 .seg {
   position: relative; overflow: visible; height: 30px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-weight: 600; font-size: 13px;
   background: transparent; color: var(--secondary); cursor: pointer; transition: background .18s var(--ease), color .18s var(--ease);
@@ -200,44 +252,80 @@ body::before {
 .seg.active { background: var(--solid-bg); color: var(--solid-fg); }
 .seg.active:hover { background: var(--solid-bg); }
 .seg .bubble { position: static; margin-left: 6px; min-width: 18px; height: 18px; padding: 0 5px; font-size: 11px; box-shadow: none; animation: none; vertical-align: 1px; }
+#tool-pointer, #tool-box { width: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .segmented { margin-right: 6px; }
 
 /* Prompt collector: a glass drawer over the frame, collapsible from its left edge */
 .collector {
-  position: absolute; z-index: 2; top: 80px; right: 12px; bottom: 12px; width: 260px; display: flex;
-  border-radius: 22px; overflow: hidden; background: var(--banner); border: 1px solid var(--glass-border);
-  -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, .24); transition: transform .3s var(--spring); animation: rise .5s var(--ease) both;
+  position: absolute; z-index: 2; top: 72px; right: 16px; bottom: 16px; width: 320px; display: flex;
+  border-radius: 24px; overflow: hidden; background: var(--card-shell-bg); border: 1px solid var(--card-shell-border);
+  box-shadow: var(--card-shell-shadow); transition: transform .3s var(--spring); animation: rise .5s var(--ease) both;
+  color: var(--card-fg);
 }
 .collector[hidden] { display: none; }
-.collector.collapsed { transform: translateX(calc(100% - 22px)); }
+.collector.collapsed { transform: translateX(calc(100% - 18px)); }
 .collector-handle {
-  flex: none; width: 22px; border: 0; border-right: 1px solid var(--glass-border); cursor: pointer;
-  background: var(--hover); color: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 14px;
+  flex: none; width: 18px; border: 0; border-right: 1px solid var(--card-shell-border); cursor: pointer;
+  background: transparent; color: var(--card-secondary); display: flex; align-items: center; justify-content: center; font-size: 13px;
+  transition: background .16s var(--ease), color .16s var(--ease);
 }
-.collector-handle:hover { background: var(--pressed); color: var(--fg); }
+.collector-handle:hover { background: var(--card-close-hover); color: var(--card-fg); }
 .collector-handle::before { content: "\2039"; }
 .collector.collapsed .collector-handle::before { content: "\203A"; }
-.collector-body { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 14px 12px; overflow-y: auto; }
-.collector-head { font-weight: 700; font-size: 13px; margin-bottom: 10px; flex: none; }
-.collector-list { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
-.collector-empty { font-size: 12px; line-height: 1.5; color: var(--secondary); padding: 4px 2px; }
+.collector-body { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 20px 18px; overflow: hidden; background: var(--card-shell-bg); }
+.collector-head { font-weight: 700; font-size: 19px; color: var(--card-fg); margin-bottom: 16px; flex: none; display: flex; align-items: center; justify-content: space-between; letter-spacing: -0.01em; }
+.collector-close {
+  all: initial; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; color: var(--card-secondary); transition: background .16s ease, color .16s ease;
+}
+.collector-close:hover { background: var(--card-close-hover); color: var(--card-fg); }
+.collector-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 4px; }
+.collector-list::-webkit-scrollbar { width: 5px; }
+.collector-list::-webkit-scrollbar-thumb { background: var(--collector-scrollbar-thumb); border-radius: 99px; }
+.collector-empty { font-size: 13px; line-height: 1.5; color: var(--card-secondary); padding: 12px 0; text-align: center; }
 .collector-row {
-  border: 1px solid var(--glass-border); border-radius: 12px; padding: 8px 10px; cursor: pointer; background: transparent;
-  transition: background .16s var(--ease);
+  border: 1px solid var(--card-row-border); border-radius: 16px; padding: 14px; cursor: pointer; background: var(--card-row-bg);
+  box-shadow: var(--card-row-shadow);
+  transition: background .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease);
 }
-.collector-row:hover { background: var(--hover); }
-.collector-row.active { background: var(--hover); }
-.collector-row.lost { opacity: .5; }
-.collector-row .loc { display: block; font-size: 11px; color: var(--secondary); margin-bottom: 3px; }
-.collector-row .req { font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
-.collector-row .lost-note { display: block; font-size: 11px; font-style: italic; color: var(--secondary); margin-top: 2px; }
-.collector-row.whole textarea {
-  width: 100%; box-sizing: border-box; resize: vertical; min-height: 56px; margin-top: 4px; border-radius: 10px;
-  border: 1px solid var(--glass-border); background: transparent; color: var(--fg); font: inherit; font-size: 13px; padding: 6px 8px;
+.collector-row:hover, .collector-row.active { border-color: var(--card-row-hover-border); box-shadow: 0 6px 18px rgba(0, 0, 0, .08); }
+.collector-row.lost { opacity: .55; }
+.collector-row .row-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.collector-row .row-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.collector-row .row-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--card-secondary); margin-bottom: 3px; }
+.collector-row .row-title { font-size: 14px; font-weight: 600; color: var(--card-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collector-row .row-del {
+  all: initial; cursor: pointer; width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; color: var(--card-secondary); transition: background .16s ease, color .16s ease; flex: none;
 }
-.collector-row.whole textarea::placeholder { color: var(--secondary); }
-.collector-foot { flex: none; font-size: 11px; color: var(--secondary); margin-top: 10px; line-height: 1.4; }
+.collector-row:hover .row-del { opacity: 1; }
+.collector-row .row-del:hover { background: var(--card-del-hover-bg); color: var(--card-del-hover-fg); }
+.collector-row textarea.req-input {
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 72px; border-radius: 10px;
+  border: 1px solid var(--card-input-border); background: var(--card-input-bg); color: var(--card-input-fg); font: inherit; font-size: 13px;
+  padding: 10px 12px; line-height: 1.45; outline: none; transition: border-color .16s ease;
+}
+.collector-row textarea.req-input::-webkit-scrollbar { width: 5px; }
+.collector-row textarea.req-input::-webkit-scrollbar-thumb { background: var(--collector-scrollbar-thumb); border-radius: 99px; }
+.collector-row textarea.req-input:focus { border-color: rgba(244,192,95,1); box-shadow: 0 0 0 2px rgba(244,192,95,.3); }
+.collector-row textarea.req-input::placeholder { color: var(--card-input-placeholder); }
+.collector-row .lost-note { display: block; font-size: 11px; font-style: italic; color: var(--card-secondary); margin-top: 4px; }
+.btn.primary.collector-btn {
+  all: initial; box-sizing: border-box; width: 100%; height: 48px; border-radius: 14px;
+  background: var(--cta-bg); color: var(--cta-fg); font: inherit; font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; position: relative; border: none; cursor: pointer;
+  margin-top: 16px; flex: none; transition: background .18s var(--ease), transform .18s var(--spring);
+}
+.collector-btn:hover { background: var(--cta-hover-bg); transform: translateY(-1px); }
+.collector-btn:active { transform: scale(.98); }
+.collector-btn:disabled { opacity: .4; pointer-events: none; }
+.collector-btn .bubble {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: var(--cta-badge-bg); color: var(--cta-badge-fg); font-size: 13px; font-weight: 700;
+  width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  padding: 0; box-shadow: none; animation: none;
+}
+.collector-foot { flex: none; font-size: 12px; color: var(--card-secondary); margin-top: 10px; line-height: 1.4; text-align: left; }
 .collector-stale { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 10px; margin-bottom: 10px; border-radius: 12px; background: var(--hover); font-size: 12px; line-height: 1.4; }
 .collector-stale[hidden] { display: none; }
 .collector-stale .row-actions { display: flex; gap: 8px; }

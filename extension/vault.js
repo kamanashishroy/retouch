@@ -95,6 +95,20 @@ const RetouchVault = {
     if (p === 'prompt') p = await handle.requestPermission({ mode: 'readwrite' });
     return p;
   },
+  // Writes a PNG blob to a screenshots/ folder next to the file being edited (same folder as the
+  // image-replace write in viewer.js, per D24 — not the vault's own root, which may be several
+  // levels above the file). Returns a path relative to the file's folder, e.g. "screenshots/note.png".
+  async writeScreenshot(fileUrl, blob) {
+    const found = await this.resolve(fileUrl, null);
+    if (!found || !found.dirHandle) return null;
+    const dir = await found.dirHandle.getDirectoryHandle('screenshots', { create: true });
+    const fileName = await this.uniqueName(dir, 'note.png');
+    const fileHandle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return `screenshots/${fileName}`;
+  },
   // Returns { vault, fileHandle, relPath } or null. When `expectedText` is given, a candidate file
   // only counts if its contents match, which disambiguates same-named folders.
   async resolve(fileUrl, expectedText) {
