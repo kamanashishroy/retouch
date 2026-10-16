@@ -19,6 +19,34 @@
   const isUi = (node) => { const el = node && (node.nodeType === 1 ? node : node.parentElement); return !!(el && el.closest(UI)); };
   const SKIP = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'TEXTAREA', 'INPUT', 'SELECT', 'BUTTON', 'SVG']);
 
+  const rt = globalThis.__retouchRuntime || {
+    setOwnership() {},
+    busy() {},
+    ignore(fn) { fn(); },
+    entry() {},
+    entries() {},
+    seed() {},
+    textEntry() {}
+  };
+
+  rt.setOwnership((node) => {
+    if (isUi(node)) return true;
+    const el = node && (node.nodeType === 1 ? node : node.parentElement);
+    if (!el) return false;
+    if (state.edited.has(el)) return true;
+    const ed = el.closest('[contenteditable]');
+    if (ed && state.edited.has(ed)) return true;
+    for (const tracked of state.edited.keys()) {
+      if (tracked.contains(el)) return true;
+    }
+    return false;
+  });
+
+  const BUSY_EVENTS = ['keydown', 'beforeinput', 'input', 'mousedown', 'click', 'paste', 'cut', 'drop', 'change', 'focusout', 'submit'];
+  for (const evt of BUSY_EVENTS) {
+    document.addEventListener(evt, () => rt.busy(), true);
+  }
+
   // ---------- styles injected into the page ----------
   function ensureStyle() {
     if (state.styled) return;
@@ -36,16 +64,21 @@
       html.retouch-editing [data-retouch-block][data-retouch-target], html.retouch-editing [data-retouch-block][contenteditable="plaintext-only"], [data-retouch-block][data-retouch-reveal] { outline-offset: 10px; }
       html.retouch-editing [data-retouch-cell][data-retouch-target], html.retouch-editing [data-retouch-cell][contenteditable="plaintext-only"], [data-retouch-cell][data-retouch-reveal] { outline-offset: -3px; border-radius: 4px; }
       html.retouch-editing [data-retouch-target] { outline-color: color-mix(in srgb, currentColor 22%, transparent); cursor: text; }
+      html.retouch-editing [data-retouch-cliptext][data-retouch-target] { outline-color: color-mix(in srgb, color-mix(in srgb, #f4c05f 78%, #000) 40%, transparent); }
       /* Only the block being edited right now carries the hairline. Changed blocks show their yellow mark alone. */
       html.retouch-editing [contenteditable="plaintext-only"]:focus { outline-color: color-mix(in srgb, currentColor 55%, transparent); }
+      html.retouch-editing [data-retouch-cliptext][contenteditable="plaintext-only"]:focus { outline-color: color-mix(in srgb, color-mix(in srgb, #f4c05f 78%, #000) 75%, transparent); caret-color: color-mix(in srgb, #f4c05f 78%, #000); }
       /* Focus mode: while a block is being edited, everything that is not on the path to it fades back. */
       html.retouch-editing body > :not([data-retouch-ui]), html.retouch-editing [data-retouch-path] > * { transition: opacity .38s cubic-bezier(.2,.8,.2,1); }
       html.retouch-focus body > :not([data-retouch-path]):not([contenteditable]):not([data-retouch-ui]),
       html.retouch-focus [data-retouch-path] > :not([data-retouch-path]):not([contenteditable]):not([data-retouch-ui]) { opacity: .42; }
       /* Changes are yellow because yellow means something: a highlighter on changed words, a slim bar beside a changed block. */
-      html.retouch-editing [data-retouch-changed] { --retouch-mark: color-mix(in srgb, #f4c05f 78%, currentColor); background: color-mix(in srgb, var(--retouch-mark) 45%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--retouch-mark) 45%, transparent); border-radius: 4px;
+      html.retouch-editing [data-retouch-changed] { --retouch-mark: color-mix(in srgb, #f4c05f 78%, currentColor); border-radius: 4px;
         -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background .2s ease, box-shadow .2s ease; }
-      html.retouch-editing [data-retouch-block][data-retouch-changed] { background: none; box-shadow: -20px 0 0 -17px var(--retouch-mark); border-radius: 6px; }
+      html.retouch-editing [data-retouch-changed]:not([data-retouch-cliptext]):not([data-retouch-block]) { background: color-mix(in srgb, var(--retouch-mark) 45%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--retouch-mark) 45%, transparent); }
+      html.retouch-editing [data-retouch-cliptext][data-retouch-changed] { --retouch-mark: color-mix(in srgb, #f4c05f 78%, #000); box-shadow: 0 2px 0 0 var(--retouch-mark); border-radius: 0; }
+      html.retouch-editing [data-retouch-block][data-retouch-changed]:not([data-retouch-cliptext]) { background: none; box-shadow: -20px 0 0 -17px var(--retouch-mark); border-radius: 6px; }
+      html.retouch-editing [data-retouch-block][data-retouch-cliptext][data-retouch-changed] { box-shadow: -20px 0 0 -17px var(--retouch-mark); border-radius: 6px; }
       html.retouch-editing [data-retouch-block][data-retouch-changed] { outline-offset: 10px; }
       html.retouch-editing [data-retouch-empty] { min-height: 1.3em; min-width: 1.5em; }
       html.retouch-editing [data-retouch-empty]:not([contenteditable])::before { content: "\\200B"; }
@@ -72,8 +105,10 @@
       [data-retouch-reveal] { animation: retouch-breathe 1s cubic-bezier(.2,.8,.2,1) both; }
       @keyframes retouch-breathe { 0% { outline-color: transparent; outline-offset: 2px; } 35% { outline-color: color-mix(in srgb, currentColor 40%, transparent); } 100% { outline-color: transparent; } }
       [data-retouch-saved] { animation: retouch-settle 1.4s cubic-bezier(.2,.8,.2,1) both; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+      [data-retouch-cliptext][data-retouch-saved] { animation-name: retouch-settle-cliptext; border-radius: 0; }
       [data-retouch-block][data-retouch-saved] { animation-name: retouch-settle-block; border-radius: 6px; }
       @keyframes retouch-settle { from { background: rgba(244,192,95,.55); box-shadow: 0 0 0 3px rgba(244,192,95,.55); } to { background: transparent; box-shadow: 0 0 0 3px transparent; } }
+      @keyframes retouch-settle-cliptext { from { box-shadow: 0 2px 0 0 color-mix(in srgb, #f4c05f 78%, #000); } to { box-shadow: 0 2px 0 0 transparent; } }
       @keyframes retouch-settle-block { from { box-shadow: -20px 0 0 -17px color-mix(in srgb, #f4c05f 78%, currentColor); } to { box-shadow: -20px 0 0 -17px transparent; } }
       #retouch-pop { all: initial; position: fixed; z-index: 2147483647; display: flex; flex-direction: column; padding: 5px; border-radius: 20px;
         color: #f5f5f7; opacity: 0; transform: translateY(8px) scale(.94); pointer-events: none;
@@ -91,6 +126,8 @@
       #retouch-pop button:hover { background: rgba(255,255,255,.14); }
       #retouch-pop button:active { transform: scale(.94); }
       #retouch-pop button.active { background: #fff; color: #0b0b0d; }
+      #retouch-pop button:disabled { opacity: .35; cursor: default; }
+      #retouch-pop button:disabled:hover { background: transparent; }
       #retouch-pop button.b { font-weight: 800; } #retouch-pop button.i { font-style: italic; font-family: Georgia, serif; font-weight: 500; } #retouch-pop button.c { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
       #retouch-pop button.u { text-decoration: underline; font-weight: 600; } #retouch-pop button.s { text-decoration: line-through; font-weight: 600; }
       #retouch-pop .menu .adv-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 6px; width: 100%; box-sizing: border-box; }
@@ -183,24 +220,44 @@
     while ((n = w.nextNode())) out.push(n);
     return out;
   }
-  // The nearest preceding text of 3+ characters outside `exclude`, used to disambiguate an element
-  // whose text appears more than once. Shared by collect() (element changes) and the Prompt collector
-  // (pins), so both locate elements in the source the same way.
+  // The nearest preceding text of 3+ characters outside `exclude`, preferring text that is unique in
+  // the document. Shared by collect() (element/text/empty/attr changes) and the Prompt collector (pins).
   function anchorNodeBefore(el, exclude, pool) {
     const allText = pool || textNodes(document.body || document.documentElement);
+    if (!allText._counts) {
+      const counts = new Map();
+      for (let i = 0; i < allText.length; i++) {
+        const t = allText[i];
+        if (exclude && exclude.some((e) => e.contains(t))) continue;
+        if (rt.textEntry && rt.textEntry(t)) continue;
+        const s = t.data.trim();
+        if (s.length >= 3) {
+          counts.set(s, (counts.get(s) || 0) + 1);
+        }
+      }
+      allText._counts = counts;
+    }
+    const counts = allText._counts;
+    let fallback = null;
     for (let j = allText.length - 1; j >= 0; j--) {
       const t = allText[j];
       if (!(el.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_PRECEDING)) continue;
       if (exclude && exclude.some((e) => e.contains(t))) continue;
-      if (t.data.trim().length >= 3) return t;
+      if (rt.textEntry && rt.textEntry(t)) continue;
+      const s = t.data.trim();
+      if (s.length >= 3) {
+        if (!fallback) fallback = t;
+        if (counts.get(s) === 1) return t;
+      }
     }
-    return null;
+    return fallback;
   }
   function anchorBefore(el, exclude, pool) { const n = anchorNodeBefore(el, exclude, pool); return n ? n.data : ''; }
   // { tag, firstText, lastText, anchor } for any element, the same shape collect() builds for element
   // changes. Used by the Prompt collector to pin a block without putting it into the editing session.
   function elementRecord(el) {
-    const tn = textNodes(el).filter((n) => n.data.trim());
+    const fv = fileView(el);
+    const tn = textNodes(fv).filter((n) => n.data.trim());
     return {
       tag: el.tagName.toLowerCase(),
       firstText: tn.length ? tn[0].data : null,
@@ -261,6 +318,15 @@
     }
     return null;
   }
+  function listUnitFor(t) {
+    if (!t || t.tagName !== 'LI') return t;
+    const parent = t.parentElement;
+    if (!parent || (parent.tagName !== 'UL' && parent.tagName !== 'OL')) return t;
+    const onlyLis = Array.from(parent.children).every((c) => c.tagName === 'LI');
+    const noNested = !parent.querySelector('ul, ol') && !parent.closest('li') && !parent.parentElement.closest('ul, ol');
+    if (onlyLis && noNested) return parent;
+    return t;
+  }
   function markEmpties(on) {
     if (!on) { for (const e of document.querySelectorAll('[data-retouch-empty]')) e.removeAttribute('data-retouch-empty'); return; }
     for (const el of document.body.querySelectorAll('td, th, p, li, h1, h2, h3, h4, h5, h6, dd, dt, figcaption, caption')) {
@@ -269,13 +335,6 @@
   }
   // The element's markup as it should appear in the file: without our attributes and UI, and with
   // replaced images pointing at their file name rather than the in-memory preview.
-  function cleanInnerHtml(el) {
-    const clone = el.cloneNode(true);
-    cleanClone(clone);
-    let html = clone.innerHTML;
-    if (/<br>$/.test(html)) html = html.slice(0, -4);   // the browser's placeholder break in an emptied block
-    return html;
-  }
   function cleanClone(clone) {
     for (const ui of clone.querySelectorAll(UI)) ui.remove();
     for (const node of [clone, ...clone.querySelectorAll('*')]) {
@@ -287,30 +346,644 @@
       if (node.getAttribute('class') === '') node.removeAttribute('class');
     }
   }
-  function cleanOuterHtml(el) {
-    const clone = el.cloneNode(true);
-    cleanClone(clone);
-    return clone.outerHTML;
+  const classTokens = (str) => (str ? str.trim().split(/\s+/).filter(Boolean) : []);
+
+  function restoreRuntimeAttrs(live, clone) {
+    function walk(liveNode, cloneNode) {
+      if (liveNode.nodeType === 1 && cloneNode.nodeType === 1) {
+        const entriesMap = (rt.entries && rt.entries(liveNode)) ? new Map(rt.entries(liveNode)) : null;
+        if (entriesMap && entriesMap.size > 0) {
+          for (const [name, entry] of entriesMap) {
+            const { original, last } = entry;
+            const current = liveNode.getAttribute(name);
+            if (name === 'class') {
+              const origTokens = classTokens(original);
+              const lastTokens = classTokens(last);
+              const addedSet = new Set(lastTokens.filter((t) => !origTokens.includes(t)));
+              const removedList = origTokens.filter((t) => !lastTokens.includes(t));
+              const currTokens = classTokens(current);
+              const kept = currTokens.filter((t) => !addedSet.has(t));
+              for (const t of removedList) {
+                if (!kept.includes(t)) kept.push(t);
+              }
+              if (kept.length > 0) {
+                cloneNode.setAttribute('class', kept.join(' '));
+              } else if (original != null) {
+                cloneNode.setAttribute('class', '');
+              } else {
+                cloneNode.removeAttribute('class');
+              }
+            } else {
+              if (current === last) {
+                if (original == null) {
+                  cloneNode.removeAttribute(name);
+                } else {
+                  cloneNode.setAttribute(name, original);
+                }
+              }
+            }
+          }
+        }
+      }
+      const liveKids = liveNode.childNodes;
+      const cloneKids = cloneNode.childNodes;
+      const len = Math.min(liveKids.length, cloneKids.length);
+      for (let i = 0; i < len; i++) {
+        walk(liveKids[i], cloneKids[i]);
+      }
+    }
+    walk(live, clone);
   }
+
+  function originalAttributes(el) {
+    const result = [];
+    const entriesMap = (rt.entries && rt.entries(el)) ? new Map(rt.entries(el)) : new Map();
+    const seen = new Set();
+
+    for (const attr of el.attributes) {
+      const name = attr.name;
+      if (name.startsWith('data-retouch-') || name === 'contenteditable') continue;
+      seen.add(name);
+      const entry = entriesMap.get(name) || (rt.entry ? rt.entry(el, name) : undefined);
+      if (!entry) {
+        result.push([name, attr.value]);
+        continue;
+      }
+      const { original, last } = entry;
+      const current = attr.value;
+      if (name === 'class') {
+        const origTokens = classTokens(original);
+        const lastTokens = classTokens(last);
+        const addedSet = new Set(lastTokens.filter((t) => !origTokens.includes(t)));
+        const removedList = origTokens.filter((t) => !lastTokens.includes(t));
+        const currTokens = classTokens(current);
+        const kept = currTokens.filter((t) => !addedSet.has(t));
+        for (const t of removedList) {
+          if (!kept.includes(t)) kept.push(t);
+        }
+        if (kept.length > 0) {
+          result.push([name, kept.join(' ')]);
+        } else if (original != null) {
+          result.push([name, '']);
+        }
+      } else {
+        if (current === last) {
+          if (original != null) {
+            result.push([name, original]);
+          }
+        } else {
+          result.push([name, current]);
+        }
+      }
+    }
+
+    for (const [name, entry] of entriesMap) {
+      if (seen.has(name)) continue;
+      if (name.startsWith('data-retouch-') || name === 'contenteditable') continue;
+      const { original, last } = entry;
+      const current = el.getAttribute(name);
+      if (name === 'class') {
+        const origTokens = classTokens(original);
+        const lastTokens = classTokens(last);
+        const addedSet = new Set(lastTokens.filter((t) => !origTokens.includes(t)));
+        const removedList = origTokens.filter((t) => !lastTokens.includes(t));
+        const kept = removedList;
+        if (kept.length > 0) {
+          result.push([name, kept.join(' ')]);
+        } else if (original != null) {
+          result.push([name, '']);
+        }
+      } else {
+        if (current === last && original != null) {
+          result.push([name, original]);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  function fileView(el) {
+    const clone = el.cloneNode(true);
+    restoreRuntimeAttrs(el, clone);
+
+    function walk(liveNode, cloneNode) {
+      if (liveNode.nodeType === 1) {
+        const pEntry = rt.textEntry ? rt.textEntry(liveNode) : undefined;
+        if (pEntry && !pEntry.restructured && pEntry.original != null) {
+          if (liveNode.textContent === pEntry.last) {
+            cloneNode.textContent = pEntry.original;
+            return;
+          }
+        }
+        const liveKids = liveNode.childNodes;
+        const cloneKids = cloneNode.childNodes;
+        const len = Math.min(liveKids.length, cloneKids.length);
+        for (let i = 0; i < len; i++) {
+          walk(liveKids[i], cloneKids[i]);
+        }
+      } else if (liveNode.nodeType === 3) {
+        const tEntry = rt.textEntry ? rt.textEntry(liveNode) : undefined;
+        if (tEntry && !tEntry.restructured && tEntry.original != null) {
+          if (liveNode.data === tEntry.last) {
+            cloneNode.data = tEntry.original;
+          }
+        }
+      }
+    }
+
+    walk(el, clone);
+    cleanClone(clone);
+    return clone;
+  }
+
+  function cleanOuterHtml(el) {
+    const fv = fileView(el);
+    cleanClone(fv);
+    return fv.outerHTML;
+  }
+
+  function cleanInnerHtml(el) {
+    const fv = fileView(el);
+    cleanClone(fv);
+    let html = fv.innerHTML;
+    if (/<br>$/.test(html)) html = html.slice(0, -4);   // the browser's placeholder break in an emptied block
+    return html;
+  }
+
   // ---------- editing state ----------
+  let createdListItems = new WeakSet();
+  const isListItemEmpty = (li) => !li.textContent.replace(/\u200B/g, '').trim() && !li.querySelector('img');
+  function pruneEmptyCreatedItems(root) {
+    if (!root || (root.tagName !== 'UL' && root.tagName !== 'OL')) return;
+    rt.busy();
+    let removed = false;
+    for (const li of [...root.querySelectorAll('li')]) {
+      if (createdListItems.has(li) && isListItemEmpty(li)) {
+        li.remove();
+        removed = true;
+      }
+    }
+    if (removed) refresh();
+  }
+  function copyAttributesAndSeed(srcEl, destEl) {
+    const origMap = new Map(originalAttributes(srcEl));
+    const names = new Set(origMap.keys());
+    for (const attr of srcEl.attributes) {
+      if (attr.name.startsWith('data-retouch-') || attr.name === 'contenteditable') continue;
+      names.add(attr.name);
+    }
+    for (const name of names) {
+      const liveVal = srcEl.hasAttribute(name) ? srcEl.getAttribute(name) : null;
+      const origVal = origMap.has(name) ? origMap.get(name) : null;
+      if (liveVal !== null) destEl.setAttribute(name, liveVal);
+      if (rt.seed) rt.seed(destEl, name, origVal, liveVal);
+    }
+  }
   const isBlock = (el) => !/^inline/.test(getComputedStyle(el).display);
   const isCell = (el) => getComputedStyle(el).display === 'table-cell';
+  function isClipText(el) {
+    const cs = getComputedStyle(el);
+    const clip = (cs.backgroundClip || '') + ' ' + (cs.webkitBackgroundClip || cs.getPropertyValue('-webkit-background-clip') || '');
+    if (/\btext\b/.test(clip)) return true;
+    const isTransparent = cs.color === 'transparent' || /,\s*0\s*\)$|\/\s*0\s*\)$/.test(cs.color);
+    return isTransparent && Boolean(cs.backgroundImage && cs.backgroundImage !== 'none');
+  }
   function markShape(el) {
     if (isCell(el)) el.setAttribute('data-retouch-cell', '');
     else if (isBlock(el)) el.setAttribute('data-retouch-block', '');
+    if (isClipText(el)) el.setAttribute('data-retouch-cliptext', '');
   }
-  function unmarkShape(el) { el.removeAttribute('data-retouch-block'); el.removeAttribute('data-retouch-cell'); }
+  function unmarkShape(el) {
+    el.removeAttribute('data-retouch-block');
+    el.removeAttribute('data-retouch-cell');
+    el.removeAttribute('data-retouch-cliptext');
+  }
+  // ---------- undo & redo while editing (U1) ----------
+  const undoStack = [];
+  const redoStack = [];
+  let activeTyping = null;
+  let typingTimer = null;
+  let isExecutingCommand = false;
+
+  function sendUndoState() {
+    send({
+      type: 'undo-state',
+      canUndo: undoStack.length > 0 || !!activeTyping,
+      canRedo: redoStack.length > 0
+    });
+  }
+
+  const activeBlobUrls = new Set();
+  function cleanupBlobUrls() {
+    for (const url of activeBlobUrls) {
+      try { URL.revokeObjectURL(url); } catch (_) {}
+    }
+    activeBlobUrls.clear();
+  }
+
+  function takeSnapshot(el) {
+    if (!el || el.nodeType !== 1) return null;
+    const rec = state.edited.get(el);
+    const fv = fileView(el);
+    return {
+      parent: el.parentNode,
+      nextSibling: el.nextSibling,
+      liveOuterHtml: el.outerHTML,
+      editedRecord: rec ? {
+        html: rec.html,
+        tag: rec.tag,
+        slots: { skeleton: rec.slots.skeleton, texts: [...rec.slots.texts] },
+        tagCounts: Object.assign({}, rec.tagCounts),
+        firstText: rec.firstText,
+        lastText: rec.lastText,
+        emptyOrigin: rec.emptyOrigin,
+        fileClone: rec.fileClone ? rec.fileClone.cloneNode(true) : null,
+        absorbed: rec.absorbed ? rec.absorbed.map((a) => Object.assign({}, a, { commentsBefore: a.commentsBefore ? [...a.commentsBefore] : [] })) : []
+      } : null,
+      fileViewClone: fv ? fv.cloneNode(true) : null
+    };
+  }
+
+  function takeImageSnapshot(img) {
+    if (!img || img.nodeType !== 1) return null;
+    const rec = state.images.get(img);
+    return {
+      src: img.getAttribute('src'),
+      alt: img.getAttribute('alt'),
+      retouchSrc: img.getAttribute('data-retouch-src'),
+      changed: img.hasAttribute('data-retouch-changed'),
+      imageRecord: rec ? {
+        originalSrc: rec.originalSrc,
+        originalAlt: rec.originalAlt,
+        newSrc: rec.newSrc,
+        newAlt: rec.newAlt,
+        blobUrl: rec.blobUrl,
+        pendingId: rec.pendingId
+      } : null
+    };
+  }
+
+  function restoreImageSnapshot(img, snapshot) {
+    if (!img || !snapshot) return;
+    rt.busy();
+    rt.ignore(() => {
+      if (snapshot.src == null) {
+        img.removeAttribute('src');
+      } else {
+        img.setAttribute('src', snapshot.src);
+        img.src = (snapshot.imageRecord && snapshot.imageRecord.blobUrl) ? snapshot.imageRecord.blobUrl : snapshot.src;
+      }
+
+      if (snapshot.alt == null) {
+        img.removeAttribute('alt');
+      } else {
+        img.setAttribute('alt', snapshot.alt);
+      }
+
+      if (snapshot.retouchSrc == null) {
+        img.removeAttribute('data-retouch-src');
+      } else {
+        img.setAttribute('data-retouch-src', snapshot.retouchSrc);
+      }
+
+      img.toggleAttribute('data-retouch-changed', !!snapshot.changed);
+    });
+
+    if (snapshot.imageRecord) {
+      state.images.set(img, {
+        originalSrc: snapshot.imageRecord.originalSrc,
+        originalAlt: snapshot.imageRecord.originalAlt,
+        newSrc: snapshot.imageRecord.newSrc,
+        newAlt: snapshot.imageRecord.newAlt,
+        blobUrl: snapshot.imageRecord.blobUrl,
+        pendingId: snapshot.imageRecord.pendingId
+      });
+    } else {
+      state.images.delete(img);
+    }
+
+    if (state.imgPanel && state.imgTarget === img) {
+      const rec = state.images.get(img);
+      if (state.imgPanel._alt) state.imgPanel._alt.value = img.getAttribute('alt') || '';
+      if (state.imgPanel._restore) state.imgPanel._restore.style.display = rec ? '' : 'none';
+      if (state.imgPanel._meta) {
+        const pic = img.closest('picture');
+        const hasSources = pic && pic.querySelector('source');
+        const picWarn = hasSources ? ' · picture has responsive <source> variants Retouch won\'t update' : '';
+        state.imgPanel._meta.textContent = (rec && rec.newSrc ? `${rec.newSrc} · saved next to the page when you press Save` : (img.getAttribute('src') || '').split('/').pop().slice(0, 48)) + picWarn;
+      }
+    }
+
+    refresh();
+  }
+
+  function undoJoin(step) {
+    step.listNode = restoreSnapshot(step.listNode, step.listBefore);
+
+    rt.ignore(() => {
+      const p = step.paragraph.node;
+      p.innerHTML = step.paragraph.html;
+
+      const parent = step.paragraph.parent;
+      let nextRef = (step.paragraph.nextSibling && step.paragraph.nextSibling.parentNode === parent)
+        ? step.paragraph.nextSibling
+        : (step.listNode && step.listNode.parentNode === parent ? step.listNode.nextSibling : null);
+
+      if (step.comments && step.comments.length) {
+        for (const c of step.comments) {
+          parent.insertBefore(c, nextRef);
+        }
+      }
+      parent.insertBefore(p, nextRef);
+
+      if (step.paragraph.fileViewClone) {
+        reseedFromSnapshot(p, step.paragraph.fileViewClone);
+      }
+    });
+
+    refresh();
+    if (state.menu && state.menu.dataset.kind === 'advanced') {
+      openMenu('advanced', true);
+    } else {
+      positionPopover();
+    }
+  }
+
+  function redoJoin(step) {
+    step.listNode = restoreSnapshot(step.listNode, step.listAfter);
+
+    rt.ignore(() => {
+      step.paragraph.node.remove();
+      if (step.comments && step.comments.length) {
+        for (const c of step.comments) {
+          c.remove();
+        }
+      }
+    });
+
+    refresh();
+    if (state.menu && state.menu.dataset.kind === 'advanced') {
+      openMenu('advanced', true);
+    } else {
+      positionPopover();
+    }
+  }
+
+  function reseedFromSnapshot(liveRoot, fileRoot) {
+    if (!liveRoot || !fileRoot) return;
+    reseedFromFileClone(liveRoot, fileRoot);
+    if (!rt.seedText) return;
+    function walkText(liveNode, fileNode) {
+      if (!liveNode || !fileNode) return;
+      if (liveNode.nodeType === 3 && fileNode.nodeType === 3) {
+        if (liveNode.data !== fileNode.data) {
+          rt.seedText(liveNode, fileNode.data, liveNode.data);
+        }
+        return;
+      }
+      if (liveNode.nodeType === 1 && fileNode.nodeType === 1) {
+        const lKids = liveNode.childNodes;
+        const fKids = fileNode.childNodes;
+        const len = Math.min(lKids.length, fKids.length);
+        for (let i = 0; i < len; i++) {
+          walkText(lKids[i], fKids[i]);
+        }
+      }
+    }
+    walkText(liveRoot, fileRoot);
+  }
+
+  function placeCaretAtEnd(el) {
+    el.focus({ preventScroll: true });
+    const sel = window.getSelection();
+    if (!sel) return;
+    const range = document.createRange();
+    let targetNode = el;
+    if (el.tagName === 'UL' || el.tagName === 'OL') {
+      const lis = el.querySelectorAll('li');
+      if (lis.length > 0) targetNode = lis[lis.length - 1];
+    }
+    range.selectNodeContents(targetNode);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    state.savedRange = range.cloneRange();
+  }
+
+  function replaceTrackedNode(oldNode, newNode) {
+    if (!oldNode || !newNode || oldNode === newNode) return;
+    for (const step of undoStack) {
+      if (step.node === oldNode) step.node = newNode;
+      if (step.listNode === oldNode) step.listNode = newNode;
+      if (step.img === oldNode) step.img = newNode;
+      if (step.paragraph && step.paragraph.node === oldNode) step.paragraph.node = newNode;
+    }
+    for (const step of redoStack) {
+      if (step.node === oldNode) step.node = newNode;
+      if (step.listNode === oldNode) step.listNode = newNode;
+      if (step.img === oldNode) step.img = newNode;
+      if (step.paragraph && step.paragraph.node === oldNode) step.paragraph.node = newNode;
+    }
+    if (activeTyping && activeTyping.el === oldNode) activeTyping.el = newNode;
+    if (state.hover === oldNode) state.hover = newNode;
+    if (state.imgTarget === oldNode) state.imgTarget = newNode;
+  }
+
+  function restoreSnapshot(currentNode, snapshot) {
+    let restored = null;
+    rt.ignore(() => {
+      const doc = (currentNode && currentNode.ownerDocument) || document;
+      const range = doc.createRange();
+      if (currentNode && currentNode.parentNode) {
+        range.selectNode(currentNode);
+      } else if (snapshot.parent) {
+        range.selectNodeContents(snapshot.parent);
+      }
+      let frag = null;
+      try {
+        frag = range.createContextualFragment(snapshot.liveOuterHtml);
+      } catch (_) {}
+      restored = frag ? frag.firstElementChild : null;
+      if (!restored) {
+        const t = doc.createElement('template');
+        t.innerHTML = snapshot.liveOuterHtml;
+        restored = t.content.firstElementChild;
+      }
+      if (!restored) return;
+
+      if (currentNode && currentNode.parentNode) {
+        currentNode.parentNode.replaceChild(restored, currentNode);
+        replaceTrackedNode(currentNode, restored);
+      } else if (snapshot.parent) {
+        const ref = (snapshot.nextSibling && snapshot.nextSibling.parentNode === snapshot.parent) ? snapshot.nextSibling : null;
+        snapshot.parent.insertBefore(restored, ref);
+        replaceTrackedNode(currentNode, restored);
+      }
+
+      if (currentNode && currentNode !== restored) {
+        currentNode.removeEventListener('beforeinput', onBeforeInput);
+        currentNode.removeEventListener('input', onInput);
+        currentNode.removeEventListener('keydown', onKeydown);
+        currentNode.removeEventListener('focus', onFocus);
+        currentNode.removeEventListener('blur', onBlur);
+        currentNode.removeAttribute('contenteditable');
+        unmarkShape(currentNode);
+        state.edited.delete(currentNode);
+      }
+
+      if (snapshot.fileViewClone) {
+        reseedFromSnapshot(restored, snapshot.fileViewClone);
+      }
+    });
+
+    if (!restored) return null;
+
+    markShape(restored);
+    if (snapshot.editedRecord) {
+      state.edited.set(restored, {
+        html: snapshot.editedRecord.html,
+        tag: snapshot.editedRecord.tag,
+        slots: { skeleton: snapshot.editedRecord.slots.skeleton, texts: [...snapshot.editedRecord.slots.texts] },
+        tagCounts: Object.assign({}, snapshot.editedRecord.tagCounts),
+        firstText: snapshot.editedRecord.firstText,
+        lastText: snapshot.editedRecord.lastText,
+        emptyOrigin: snapshot.editedRecord.emptyOrigin,
+        fileClone: snapshot.editedRecord.fileClone ? snapshot.editedRecord.fileClone.cloneNode(true) : null,
+        absorbed: snapshot.editedRecord.absorbed ? [...snapshot.editedRecord.absorbed] : []
+      });
+      restored.setAttribute('contenteditable', 'plaintext-only');
+      restored.addEventListener('beforeinput', onBeforeInput);
+      restored.addEventListener('input', onInput);
+      restored.addEventListener('keydown', onKeydown);
+      restored.addEventListener('focus', onFocus);
+      restored.addEventListener('blur', onBlur);
+    } else {
+      state.edited.delete(restored);
+      restored.removeAttribute('contenteditable');
+      unmarkShape(restored);
+    }
+
+    if (state.hover === currentNode) state.hover = restored;
+    placeCaretAtEnd(restored);
+    refresh();
+    positionPopover();
+    return restored;
+  }
+
+  function pushStep(step) {
+    undoStack.push(step);
+    redoStack.length = 0;
+    sendUndoState();
+  }
+
+  function closeTypingBurst() {
+    if (typingTimer) {
+      clearTimeout(typingTimer);
+      typingTimer = null;
+    }
+    if (!activeTyping) return;
+    const { el, before } = activeTyping;
+    activeTyping = null;
+    if (!el.parentNode) return;
+    const after = takeSnapshot(el);
+    if (!after) return;
+    if (before.liveOuterHtml !== after.liveOuterHtml) {
+      pushStep({
+        before,
+        after,
+        node: el
+      });
+    } else {
+      sendUndoState();
+    }
+  }
+
+  function recordAction(targetNodeGetter, fn) {
+    closeTypingBurst();
+    if (isExecutingCommand) return fn();
+    isExecutingCommand = true;
+    let beforeNode = typeof targetNodeGetter === 'function' ? targetNodeGetter() : targetNodeGetter;
+    if (beforeNode && !state.edited.has(beforeNode)) beginEdit(beforeNode);
+    const before = beforeNode ? takeSnapshot(beforeNode) : null;
+    try {
+      const result = fn();
+      const afterNode = (result && result.nodeType === 1) ? result : ((typeof targetNodeGetter === 'function' ? targetNodeGetter() : targetNodeGetter) || beforeNode);
+      const after = afterNode ? takeSnapshot(afterNode) : null;
+      if (before && after && before.liveOuterHtml !== after.liveOuterHtml) {
+        pushStep({
+          before,
+          after,
+          node: afterNode
+        });
+      }
+      return result;
+    } finally {
+      isExecutingCommand = false;
+    }
+  }
+
+  function undo() {
+    if (activeTyping) {
+      closeTypingBurst();
+    }
+    if (undoStack.length === 0) return;
+    const step = undoStack.pop();
+    if (step.kind === 'join') {
+      undoJoin(step);
+    } else if (step.kind === 'image') {
+      restoreImageSnapshot(step.img, step.before);
+    } else {
+      step.node = restoreSnapshot(step.node, step.before);
+    }
+    redoStack.push(step);
+    sendUndoState();
+  }
+
+  function redo() {
+    if (activeTyping) {
+      closeTypingBurst();
+    }
+    if (redoStack.length === 0) return;
+    const step = redoStack.pop();
+    if (step.kind === 'join') {
+      redoJoin(step);
+    } else if (step.kind === 'image') {
+      restoreImageSnapshot(step.img, step.after);
+    } else {
+      step.node = restoreSnapshot(step.node, step.after);
+    }
+    undoStack.push(step);
+    sendUndoState();
+  }
+
+  function onBeforeInput(e) {
+    const el = e.currentTarget;
+    if (!el) return;
+    if (activeTyping && activeTyping.el !== el) {
+      closeTypingBurst();
+    }
+    if (!activeTyping) {
+      activeTyping = { el, before: takeSnapshot(el) };
+      if (redoStack.length > 0) redoStack.length = 0;
+      sendUndoState();
+    }
+  }
+
   function beginEdit(el) {
+    rt.busy();
     if (state.edited.has(el)) return;
     if (el.closest('[contenteditable]')) return;
     if (el.querySelector('[contenteditable]')) return;
     markShape(el);
-    const tn = textNodes(el).filter((n) => n.data.trim());
+    const fv = fileView(el);
+    const tn = textNodes(fv).filter((n) => n.data.trim());
     state.edited.set(el, {
-      html: el.innerHTML, tag: el.tagName.toLowerCase(), slots: slots(el), tagCounts: countTags(el), emptyOrigin: isEmptyLeaf(el),
+      html: el.innerHTML, fileClone: fv.cloneNode(true), tag: el.tagName.toLowerCase(), slots: slots(fv), tagCounts: countTags(fv), emptyOrigin: isEmptyLeaf(el),
       firstText: tn.length ? tn[0].data : null, lastText: tn.length ? tn[tn.length - 1].data : null
     });
     el.setAttribute('contenteditable', 'plaintext-only');
+    el.addEventListener('beforeinput', onBeforeInput);
     el.addEventListener('input', onInput);
     el.addEventListener('keydown', onKeydown);
     el.addEventListener('focus', onFocus);
@@ -318,188 +991,194 @@
   }
 
   function swapTag(el, newTag) {
-    if (!state.edited.has(el)) beginEdit(el);
-    const curTag = el.tagName.toLowerCase();
-    const targetTag = newTag.toLowerCase();
-    if (curTag === targetTag) return el;
-    const newEl = document.createElement(targetTag);
+    return recordAction(el, () => {
+      rt.busy();
+      if (!state.edited.has(el)) beginEdit(el);
+      const curTag = el.tagName.toLowerCase();
+      const targetTag = newTag.toLowerCase();
+      if (curTag === targetTag) return el;
+      const newEl = document.createElement(targetTag);
 
-    for (const attr of [...el.attributes]) {
-      if (!attr.name.startsWith('data-retouch-') && attr.name !== 'contenteditable') {
-        newEl.setAttribute(attr.name, attr.value);
+      copyAttributesAndSeed(el, newEl);
+      if (el.hasAttribute('data-retouch-changed')) newEl.setAttribute('data-retouch-changed', '');
+
+      while (el.firstChild) newEl.appendChild(el.firstChild);
+
+      el.parentNode.replaceChild(newEl, el);
+      replaceTrackedNode(el, newEl);
+
+      el.removeEventListener('beforeinput', onBeforeInput);
+      el.removeEventListener('input', onInput);
+      el.removeEventListener('keydown', onKeydown);
+      el.removeEventListener('focus', onFocus);
+      el.removeEventListener('blur', onBlur);
+      el.removeAttribute('contenteditable');
+      unmarkShape(el);
+
+      markShape(newEl);
+      newEl.setAttribute('contenteditable', 'plaintext-only');
+      newEl.addEventListener('beforeinput', onBeforeInput);
+      newEl.addEventListener('input', onInput);
+      newEl.addEventListener('keydown', onKeydown);
+      newEl.addEventListener('focus', onFocus);
+      newEl.addEventListener('blur', onBlur);
+
+      const rec = state.edited.get(el);
+      if (rec) {
+        state.edited.delete(el);
+        state.edited.set(newEl, rec);
       }
-    }
-    if (el.hasAttribute('data-retouch-changed')) newEl.setAttribute('data-retouch-changed', '');
+      if (state.hover === el) state.hover = newEl;
 
-    while (el.firstChild) newEl.appendChild(el.firstChild);
-
-    el.parentNode.replaceChild(newEl, el);
-
-    el.removeEventListener('input', onInput);
-    el.removeEventListener('keydown', onKeydown);
-    el.removeEventListener('focus', onFocus);
-    el.removeEventListener('blur', onBlur);
-    el.removeAttribute('contenteditable');
-    unmarkShape(el);
-
-    markShape(newEl);
-    newEl.setAttribute('contenteditable', 'plaintext-only');
-    newEl.addEventListener('input', onInput);
-    newEl.addEventListener('keydown', onKeydown);
-    newEl.addEventListener('focus', onFocus);
-    newEl.addEventListener('blur', onBlur);
-
-    const rec = state.edited.get(el);
-    if (rec) {
-      state.edited.delete(el);
-      state.edited.set(newEl, rec);
-    }
-    if (state.hover === el) state.hover = newEl;
-
-    newEl.focus({ preventScroll: true });
-    const sel = window.getSelection();
-    if (sel) {
-      const range = document.createRange();
-      range.selectNodeContents(newEl);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      state.savedRange = range.cloneRange();
-    }
-    refresh();
-    return newEl;
+      newEl.focus({ preventScroll: true });
+      const sel = window.getSelection();
+      if (sel) {
+        const range = document.createRange();
+        range.selectNodeContents(newEl);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        state.savedRange = range.cloneRange();
+      }
+      refresh();
+      return newEl;
+    });
   }
 
   function wrapAsList(el, listTag) {
-    if (!state.edited.has(el)) beginEdit(el);
-    const targetTag = listTag.toLowerCase();
-    if (el.tagName === 'UL' || el.tagName === 'OL') return swapTag(el, targetTag);
+    return recordAction(el, () => {
+      rt.busy();
+      if (!state.edited.has(el)) beginEdit(el);
+      const targetTag = listTag.toLowerCase();
+      if (el.tagName === 'UL' || el.tagName === 'OL') return swapTag(el, targetTag);
 
-    const listEl = document.createElement(targetTag);
-    const hasBrs = Array.from(el.childNodes).some((n) => n.nodeName === 'BR');
-    if (hasBrs) {
-      let currentLi = document.createElement('li');
-      for (const child of Array.from(el.childNodes)) {
-        if (child.nodeName === 'BR') {
-          if (currentLi.childNodes.length > 0) {
-            listEl.appendChild(currentLi);
-            currentLi = document.createElement('li');
+      const listEl = document.createElement(targetTag);
+      const hasBrs = Array.from(el.childNodes).some((n) => n.nodeName === 'BR');
+      if (hasBrs) {
+        let currentLi = document.createElement('li');
+        for (const child of Array.from(el.childNodes)) {
+          if (child.nodeName === 'BR') {
+            if (currentLi.childNodes.length > 0) {
+              listEl.appendChild(currentLi);
+              currentLi = document.createElement('li');
+            }
+          } else {
+            currentLi.appendChild(child);
           }
-        } else {
-          currentLi.appendChild(child);
         }
+        if (currentLi.childNodes.length > 0) listEl.appendChild(currentLi);
+      } else {
+        const li = document.createElement('li');
+        while (el.firstChild) li.appendChild(el.firstChild);
+        listEl.appendChild(li);
       }
-      if (currentLi.childNodes.length > 0) listEl.appendChild(currentLi);
-    } else {
-      const li = document.createElement('li');
-      while (el.firstChild) li.appendChild(el.firstChild);
-      listEl.appendChild(li);
-    }
 
-    // Carry over the original element's own attributes (class, id, etc.) the same way swapTag does —
-    // otherwise a class like "lede" is silently and permanently lost, even on a round-trip back to <p>.
-    for (const attr of [...el.attributes]) {
-      if (!attr.name.startsWith('data-retouch-') && attr.name !== 'contenteditable') {
-        listEl.setAttribute(attr.name, attr.value);
+      // Carry over the original element's own attributes (class, id, etc.) the same way swapTag does —
+      // otherwise a class like "lede" is silently and permanently lost, even on a round-trip back to <p>.
+      copyAttributesAndSeed(el, listEl);
+      if (el.hasAttribute('data-retouch-changed')) listEl.setAttribute('data-retouch-changed', '');
+
+      el.parentNode.replaceChild(listEl, el);
+      replaceTrackedNode(el, listEl);
+
+      el.removeEventListener('beforeinput', onBeforeInput);
+      el.removeEventListener('input', onInput);
+      el.removeEventListener('keydown', onKeydown);
+      el.removeEventListener('focus', onFocus);
+      el.removeEventListener('blur', onBlur);
+      el.removeAttribute('contenteditable');
+      unmarkShape(el);
+
+      markShape(listEl);
+      listEl.setAttribute('contenteditable', 'plaintext-only');
+      listEl.addEventListener('beforeinput', onBeforeInput);
+      listEl.addEventListener('input', onInput);
+      listEl.addEventListener('keydown', onKeydown);
+      listEl.addEventListener('focus', onFocus);
+      listEl.addEventListener('blur', onBlur);
+
+      const rec = state.edited.get(el);
+      if (rec) {
+        state.edited.delete(el);
+        state.edited.set(listEl, rec);
       }
-    }
-    if (el.hasAttribute('data-retouch-changed')) listEl.setAttribute('data-retouch-changed', '');
+      if (state.hover === el) state.hover = listEl;
 
-    el.parentNode.replaceChild(listEl, el);
-
-    el.removeEventListener('input', onInput);
-    el.removeEventListener('keydown', onKeydown);
-    el.removeEventListener('focus', onFocus);
-    el.removeEventListener('blur', onBlur);
-    el.removeAttribute('contenteditable');
-    unmarkShape(el);
-
-    markShape(listEl);
-    listEl.setAttribute('contenteditable', 'plaintext-only');
-    listEl.addEventListener('input', onInput);
-    listEl.addEventListener('keydown', onKeydown);
-    listEl.addEventListener('focus', onFocus);
-    listEl.addEventListener('blur', onBlur);
-
-    const rec = state.edited.get(el);
-    if (rec) {
-      state.edited.delete(el);
-      state.edited.set(listEl, rec);
-    }
-    if (state.hover === el) state.hover = listEl;
-
-    listEl.focus({ preventScroll: true });
-    const sel = window.getSelection();
-    if (sel) {
-      const range = document.createRange();
-      range.selectNodeContents(listEl);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      state.savedRange = range.cloneRange();
-    }
-    refresh();
-    return listEl;
+      listEl.focus({ preventScroll: true });
+      const sel = window.getSelection();
+      if (sel) {
+        const range = document.createRange();
+        range.selectNodeContents(listEl);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        state.savedRange = range.cloneRange();
+      }
+      refresh();
+      return listEl;
+    });
   }
 
   function unwrapList(listEl) {
-    if (!state.edited.has(listEl)) beginEdit(listEl);
-    if (listEl.tagName !== 'UL' && listEl.tagName !== 'OL') return listEl;
-    const pEl = document.createElement('p');
+    return recordAction(listEl, () => {
+      rt.busy();
+      if (!state.edited.has(listEl)) beginEdit(listEl);
+      if (listEl.tagName !== 'UL' && listEl.tagName !== 'OL') return listEl;
+      const pEl = document.createElement('p');
 
-    const lis = Array.from(listEl.querySelectorAll('li'));
-    if (lis.length > 0) {
-      lis.forEach((li, idx) => {
-        if (idx > 0) pEl.appendChild(document.createElement('br'));
-        while (li.firstChild) pEl.appendChild(li.firstChild);
-      });
-    } else {
-      while (listEl.firstChild) pEl.appendChild(listEl.firstChild);
-    }
-
-    // Same reasoning as wrapAsList: carry over attributes so a round-trip doesn't silently drop them.
-    for (const attr of [...listEl.attributes]) {
-      if (!attr.name.startsWith('data-retouch-') && attr.name !== 'contenteditable') {
-        pEl.setAttribute(attr.name, attr.value);
+      const lis = Array.from(listEl.querySelectorAll('li'));
+      if (lis.length > 0) {
+        lis.forEach((li, idx) => {
+          if (idx > 0) pEl.appendChild(document.createElement('br'));
+          while (li.firstChild) pEl.appendChild(li.firstChild);
+        });
+      } else {
+        while (listEl.firstChild) pEl.appendChild(listEl.firstChild);
       }
-    }
-    if (listEl.hasAttribute('data-retouch-changed')) pEl.setAttribute('data-retouch-changed', '');
 
-    listEl.parentNode.replaceChild(pEl, listEl);
+      // Same reasoning as wrapAsList: carry over attributes so a round-trip doesn't silently drop them.
+      copyAttributesAndSeed(listEl, pEl);
+      if (listEl.hasAttribute('data-retouch-changed')) pEl.setAttribute('data-retouch-changed', '');
 
-    listEl.removeEventListener('input', onInput);
-    listEl.removeEventListener('keydown', onKeydown);
-    listEl.removeEventListener('focus', onFocus);
-    listEl.removeEventListener('blur', onBlur);
-    listEl.removeAttribute('contenteditable');
-    unmarkShape(listEl);
+      listEl.parentNode.replaceChild(pEl, listEl);
+      replaceTrackedNode(listEl, pEl);
 
-    markShape(pEl);
-    pEl.setAttribute('contenteditable', 'plaintext-only');
-    pEl.addEventListener('input', onInput);
-    pEl.addEventListener('keydown', onKeydown);
-    pEl.addEventListener('focus', onFocus);
-    pEl.addEventListener('blur', onBlur);
+      listEl.removeEventListener('beforeinput', onBeforeInput);
+      listEl.removeEventListener('input', onInput);
+      listEl.removeEventListener('keydown', onKeydown);
+      listEl.removeEventListener('focus', onFocus);
+      listEl.removeEventListener('blur', onBlur);
+      listEl.removeAttribute('contenteditable');
+      unmarkShape(listEl);
 
-    const rec = state.edited.get(listEl);
-    if (rec) {
-      state.edited.delete(listEl);
-      state.edited.set(pEl, rec);
-    }
-    if (state.hover === listEl) state.hover = pEl;
+      markShape(pEl);
+      pEl.setAttribute('contenteditable', 'plaintext-only');
+      pEl.addEventListener('beforeinput', onBeforeInput);
+      pEl.addEventListener('input', onInput);
+      pEl.addEventListener('keydown', onKeydown);
+      pEl.addEventListener('focus', onFocus);
+      pEl.addEventListener('blur', onBlur);
 
-    pEl.focus({ preventScroll: true });
-    const sel = window.getSelection();
-    if (sel) {
-      const range = document.createRange();
-      range.selectNodeContents(pEl);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      state.savedRange = range.cloneRange();
-    }
-    refresh();
-    return pEl;
+      const rec = state.edited.get(listEl);
+      if (rec) {
+        state.edited.delete(listEl);
+        state.edited.set(pEl, rec);
+      }
+      if (state.hover === listEl) state.hover = pEl;
+
+      pEl.focus({ preventScroll: true });
+      const sel = window.getSelection();
+      if (sel) {
+        const range = document.createRange();
+        range.selectNodeContents(pEl);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        state.savedRange = range.cloneRange();
+      }
+      refresh();
+      return pEl;
+    });
   }
 
   // Focus mode: mark the path from body to the focused block; CSS fades everything off the path.
@@ -507,26 +1186,37 @@
     clearFocusPath();
     let cur = el.parentElement;
     while (cur && cur !== document.documentElement) { cur.setAttribute('data-retouch-path', ''); cur = cur.parentElement; }
-    document.documentElement.classList.add('retouch-focus');
+    rt.ignore(() => {
+      document.documentElement.classList.add('retouch-focus');
+    });
   }
   function clearFocusPath() {
     for (const n of document.querySelectorAll('[data-retouch-path]')) n.removeAttribute('data-retouch-path');
-    document.documentElement.classList.remove('retouch-focus');
+    rt.ignore(() => {
+      document.documentElement.classList.remove('retouch-focus');
+    });
   }
-  function onFocus(e) { setFocusPath(e.currentTarget); }
+  function onFocus(e) {
+    if (activeTyping && activeTyping.el !== e.currentTarget) closeTypingBurst();
+    setFocusPath(e.currentTarget);
+  }
   function onBlur(e) {
+    closeTypingBurst();
     if (e.relatedTarget && isUi(e.relatedTarget)) return;   // moving into the popover keeps the block live
     clearFocusPath();
     const el = e.currentTarget;
+    pruneEmptyCreatedItems(el);
     const rec = state.edited.get(el);
     if (!rec) return;
     const d = diffElement(el, rec);
     if (d.kind === 'text' && !d.changes.length) release(el);  // clicked but unchanged: leave no trace
   }
   function release(el) {
+    rt.busy();
     el.removeAttribute('contenteditable');
     el.removeAttribute('data-retouch-changed');
     unmarkShape(el);
+    el.removeEventListener('beforeinput', onBeforeInput);
     el.removeEventListener('input', onInput);
     el.removeEventListener('keydown', onKeydown);
     el.removeEventListener('focus', onFocus);
@@ -535,13 +1225,49 @@
     if (state.hover === el) el.setAttribute('data-retouch-target', '');
     refresh();
   }
+  function checkRuntimeTextRefusal(el) {
+    if (!rt.textEntry) return null;
+    const elements = [el, ...el.querySelectorAll('*')];
+    for (const elem of elements) {
+      const entry = rt.textEntry(elem);
+      if (entry && !entry.restructured && entry.original != null) {
+        if (elem.textContent !== entry.last) {
+          return {
+            kind: 'refuse',
+            reason: 'runtime-text',
+            shown: elem.textContent.trim(),
+            original: entry.original
+          };
+        }
+      }
+    }
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let tn;
+    while ((tn = walker.nextNode())) {
+      const entry = rt.textEntry(tn);
+      if (entry && !entry.restructured && entry.original != null) {
+        if (tn.data !== entry.last) {
+          return {
+            kind: 'refuse',
+            reason: 'runtime-text',
+            shown: tn.data.trim(),
+            original: entry.original
+          };
+        }
+      }
+    }
+    return null;
+  }
+
   function diffElement(el, rec) {
+    if (rec.absorbed && rec.absorbed.length) return { kind: 'element' };
     if (rec.emptyOrigin) {
       const html = cleanInnerHtml(el);
       return html.trim() ? { kind: 'insert', changes: [] } : { kind: 'text', changes: [] };
     }
     if (el.tagName.toLowerCase() !== rec.tag) return { kind: 'element' };
-    const now = slots(el);
+    const fv = fileView(el);
+    const now = slots(fv);
     if (now.skeleton === rec.slots.skeleton && now.texts.length === rec.slots.texts.length) {
       const changes = [];
       rec.slots.texts.forEach((before, i) => { if (before !== now.texts[i]) changes.push({ before, after: now.texts[i] }); });
@@ -554,10 +1280,12 @@
     let count = 0;
     let structural = 0;
     for (const [el, rec] of state.edited) {
+      const refusal = checkRuntimeTextRefusal(el);
       const d = diffElement(el, rec);
-      const changed = d.kind === 'structural' || d.kind === 'element' || d.changes.length > 0;
+      const changed = !!refusal || d.kind === 'structural' || d.kind === 'element' || d.changes.length > 0;
       el.toggleAttribute('data-retouch-changed', changed);
-      if (d.kind === 'structural') structural++;
+      if (refusal) count++;
+      else if (d.kind === 'structural') structural++;
       else if (d.kind === 'element' || d.kind === 'insert') count++;
       else count += d.changes.length;
     }
@@ -569,57 +1297,124 @@
     count += state.theme.size;
     send({ type: 'changes', count, structural });
   }
-  function onInput() { refresh(); positionPopover(); }
+  function onInput(e) {
+    const el = e && e.currentTarget;
+    if (el) {
+      if (activeTyping && activeTyping.el !== el) {
+        closeTypingBurst();
+      }
+      if (!activeTyping) {
+        activeTyping = { el, before: takeSnapshot(el) };
+        if (redoStack.length > 0) redoStack.length = 0;
+      }
+      if (typingTimer) clearTimeout(typingTimer);
+      typingTimer = setTimeout(closeTypingBurst, 1000);
+      sendUndoState();
+    }
+    refresh();
+    positionPopover();
+  }
 
   // Changes in document order, each with an anchor: the nearest preceding text of 3+ characters
   // outside any edited element. The patcher uses it to pick the right occurrence.
   function collect() {
+    for (const el of [...state.edited.keys()]) {
+      pruneEmptyCreatedItems(el);
+    }
     const editedEls = [...state.edited.keys()].sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
     const allText = textNodes(document.body || document.documentElement);
     const between = (a, b) => (n) => (!a || (a.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING)) && (b.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_PRECEDING);
     const changes = [];
     let structural = 0;
+    const rewrittenAncestors = new Set();
     for (const el of editedEls) {
+      if (checkRuntimeTextRefusal(el)) continue;
       const rec = state.edited.get(el);
       const d = diffElement(el, rec);
-      if (d.kind === 'structural') { structural++; continue; }
-      const anchor = anchorBefore(el, editedEls, allText);
-      if (d.kind === 'insert') {
-        const aNode = anchorNodeBefore(el, editedEls, allText);
-        const inRange = between(aNode, el);
-        let skip = 0;
-        for (const c of document.body.getElementsByTagName(el.tagName)) if (c !== el && !isUi(c) && inRange(c) && emptyInSource(c)) skip++;
-        changes.push({ kind: 'empty', tag: el.tagName.toLowerCase(), skip, afterHtml: cleanInnerHtml(el), anchor });
-        continue;
-      }
       if (d.kind === 'element') {
-        changes.push({ kind: 'element', tag: rec.tag, firstText: rec.firstText, lastText: rec.lastText, tagCounts: rec.tagCounts, afterHtml: cleanOuterHtml(el), anchor });
-      } else {
-        for (const c of d.changes) changes.push({ before: c.before, after: c.after, anchor });
+        rewrittenAncestors.add(el);
       }
     }
-    const imgs = [...state.images.keys()].sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
-    for (const img of imgs) {
+
+    const items = [];
+    for (const el of editedEls) {
+      items.push({ kind: 'element', node: el });
+    }
+    for (const img of state.images.keys()) {
       const rec = state.images.get(img);
-      const aNode = anchorNodeBefore(img, editedEls, allText);
-      const anchor = aNode ? aNode.data : '';
-      const inRange = between(aNode, img);
-      const originalSrcOf = (c) => (state.images.get(c) ? state.images.get(c).originalSrc : c.getAttribute('src'));
-      if (rec.newSrc != null && rec.newSrc !== rec.originalSrc) {
-        let skip = 0;
-        for (const c of document.images) if (c !== img && inRange(c) && originalSrcOf(c) === rec.originalSrc) skip++;
-        changes.push({ kind: 'attr', tag: 'img', attr: 'src', before: rec.originalSrc, after: rec.newSrc, pendingId: rec.pendingId || null, skip, anchor });
-      }
-      if (rec.newAlt != null && rec.newAlt !== (rec.originalAlt || '')) {
-        const before = rec.originalAlt == null ? null : rec.originalAlt;
-        let skip = 0;
-        for (const c of document.images) {
-          if (c === img || !inRange(c)) continue;
-          const r2 = state.images.get(c);
-          const alt = r2 ? r2.originalAlt : c.getAttribute('alt');
-          if ((before == null && alt == null) || alt === before) skip++;
+      const isChanged = (rec.newSrc != null && rec.newSrc !== rec.originalSrc) || (rec.newAlt != null && rec.newAlt !== (rec.originalAlt || ''));
+      if (isChanged) {
+        let insideRewritten = false;
+        for (const anc of rewrittenAncestors) {
+          if (anc.contains(img)) {
+            insideRewritten = true;
+            break;
+          }
         }
-        changes.push({ kind: 'attr', tag: 'img', attr: 'alt', before, after: rec.newAlt, skip, anchor });
+        if (!insideRewritten) {
+          items.push({ kind: 'image', node: img });
+        }
+      }
+    }
+
+    items.sort((a, b) => (a.node === b.node ? 0 : (a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)));
+
+    for (const item of items) {
+      if (item.kind === 'element') {
+        const el = item.node;
+        const refusal = checkRuntimeTextRefusal(el);
+        if (refusal) {
+          changes.push(refusal);
+          continue;
+        }
+        const rec = state.edited.get(el);
+        const d = diffElement(el, rec);
+        if (d.kind === 'structural') { structural++; continue; }
+        const anchor = anchorBefore(el, editedEls, allText);
+        if (d.kind === 'insert') {
+          const aNode = anchorNodeBefore(el, editedEls, allText);
+          const inRange = between(aNode, el);
+          let skip = 0;
+          for (const c of document.body.getElementsByTagName(el.tagName)) if (c !== el && !isUi(c) && inRange(c) && emptyInSource(c)) skip++;
+          changes.push({ kind: 'empty', tag: el.tagName.toLowerCase(), skip, afterHtml: cleanInnerHtml(el), anchor });
+          continue;
+        }
+        if (d.kind === 'element') {
+          if (rec.absorbed && rec.absorbed.length) {
+            const runItems = [
+              { tag: rec.tag, firstText: rec.firstText, lastText: rec.lastText, tagCounts: rec.tagCounts },
+              ...rec.absorbed.map((a) => ({ tag: a.tag, firstText: a.firstText, lastText: a.lastText, tagCounts: a.tagCounts }))
+            ];
+            changes.push({ kind: 'run', items: runItems, afterHtml: cleanOuterHtml(el), anchor });
+          } else {
+            changes.push({ kind: 'element', tag: rec.tag, firstText: rec.firstText, lastText: rec.lastText, tagCounts: rec.tagCounts, afterHtml: cleanOuterHtml(el), anchor });
+          }
+        } else {
+          for (const c of d.changes) changes.push({ before: c.before, after: c.after, anchor });
+        }
+      } else if (item.kind === 'image') {
+        const img = item.node;
+        const rec = state.images.get(img);
+        const aNode = anchorNodeBefore(img, editedEls, allText);
+        const anchor = aNode ? aNode.data : '';
+        const inRange = between(aNode, img);
+        const originalSrcOf = (c) => (state.images.get(c) ? state.images.get(c).originalSrc : c.getAttribute('src'));
+        if (rec.newSrc != null && rec.newSrc !== rec.originalSrc) {
+          let skip = 0;
+          for (const c of document.images) if (c !== img && inRange(c) && originalSrcOf(c) === rec.originalSrc) skip++;
+          changes.push({ kind: 'attr', tag: 'img', attr: 'src', before: rec.originalSrc, after: rec.newSrc, pendingId: rec.pendingId || null, skip, anchor });
+        }
+        if (rec.newAlt != null && rec.newAlt !== (rec.originalAlt || '')) {
+          const before = rec.originalAlt == null ? null : rec.originalAlt;
+          let skip = 0;
+          for (const c of document.images) {
+            if (c === img || !inRange(c)) continue;
+            const r2 = state.images.get(c);
+            const alt = r2 ? r2.originalAlt : c.getAttribute('alt');
+            if ((before == null && alt == null) || alt === before) skip++;
+          }
+          changes.push({ kind: 'attr', tag: 'img', attr: 'alt', before, after: rec.newAlt, skip, anchor });
+        }
       }
     }
     for (const rec of state.theme.values()) {
@@ -628,8 +1423,8 @@
     return { changes, structural };
   }
   function resetImages() {
+    rt.busy();
     for (const [img, rec] of state.images) {
-      if (rec.blobUrl) URL.revokeObjectURL(rec.blobUrl);
       if (rec.originalSrc == null) img.removeAttribute('src'); else img.setAttribute('src', rec.originalSrc);
       if (rec.originalAlt == null) img.removeAttribute('alt'); else img.setAttribute('alt', rec.originalAlt);
       img.removeAttribute('data-retouch-src');
@@ -638,26 +1433,70 @@
     state.images.clear();
     hideImagePanel();
   }
+  function reseedFromFileClone(liveRoot, fileRoot) {
+    if (!liveRoot || !fileRoot || !rt.seed) return;
+    const liveEls = [liveRoot, ...liveRoot.querySelectorAll('*')];
+    const fileEls = [fileRoot, ...fileRoot.querySelectorAll('*')];
+    const len = Math.min(liveEls.length, fileEls.length);
+    for (let i = 0; i < len; i++) {
+      const lEl = liveEls[i];
+      const fEl = fileEls[i];
+      const names = new Set();
+      for (const a of lEl.attributes) if (!a.name.startsWith('data-retouch-') && a.name !== 'contenteditable') names.add(a.name);
+      for (const a of fEl.attributes) if (!a.name.startsWith('data-retouch-') && a.name !== 'contenteditable') names.add(a.name);
+      for (const name of names) {
+        const liveVal = lEl.hasAttribute(name) ? lEl.getAttribute(name) : null;
+        const origVal = fEl.hasAttribute(name) ? fEl.getAttribute(name) : null;
+        if (liveVal !== origVal) rt.seed(lEl, name, origVal, liveVal);
+      }
+    }
+  }
   function reset() {
+    rt.busy();
     for (const [el, rec] of [...state.edited.entries()]) {
       let cur = el;
       if (cur.tagName.toLowerCase() !== rec.tag) {
         if (cur.tagName === 'UL' || cur.tagName === 'OL') cur = unwrapList(cur);
         if (cur.tagName.toLowerCase() !== rec.tag) cur = swapTag(cur, rec.tag);
       }
-      if (cur.innerHTML !== rec.html) cur.innerHTML = rec.html;
+      if (cur.innerHTML !== rec.html) {
+        cur.innerHTML = rec.html;
+        if (rec.fileClone) reseedFromFileClone(cur, rec.fileClone);
+      }
+      if (rec.absorbed && rec.absorbed.length) {
+        let insertAfter = cur;
+        for (const item of rec.absorbed) {
+          if (item.commentsBefore && item.commentsBefore.length) {
+            for (const c of item.commentsBefore) {
+              insertAfter.after(c);
+              insertAfter = c;
+            }
+          }
+          item.node.innerHTML = item.html;
+          insertAfter.after(item.node);
+          insertAfter = item.node;
+        }
+        rec.absorbed = [];
+      }
     }
     resetImages();
     resetTheme();
+    cleanupBlobUrls();
+    undoStack.length = 0;
+    redoStack.length = 0;
+    activeTyping = null;
+    if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+    sendUndoState();
     endAll();
   }
   function commit(renames) {
+    rt.busy();
     commitTheme();
     for (const [img, rec] of state.images) {
       if (rec.pendingId && renames && renames[rec.pendingId]) rec.newSrc = renames[rec.pendingId];
       if (rec.newSrc != null) { img.setAttribute('src', rec.newSrc); rec.originalSrc = rec.newSrc; }
       if (rec.newAlt != null) rec.originalAlt = rec.newAlt;
-      if (rec.blobUrl) { URL.revokeObjectURL(rec.blobUrl); rec.blobUrl = null; }
+      rec.blobUrl = null;
       img.removeAttribute('data-retouch-src');
       rec.pendingId = null;
       if (img.hasAttribute('data-retouch-changed')) { img.setAttribute('data-retouch-saved', ''); setTimeout(() => img.removeAttribute('data-retouch-saved'), 1500); }
@@ -669,29 +1508,47 @@
       }
     }
     for (const [el, rec] of state.edited) {
-      const tn = textNodes(el).filter((n) => n.data.trim());
-      rec.html = el.innerHTML; rec.tag = el.tagName.toLowerCase(); rec.slots = slots(el); rec.tagCounts = countTags(el);
+      rec.absorbed = [];
+      const fv = fileView(el);
+      const tn = textNodes(fv).filter((n) => n.data.trim());
+      rec.html = el.innerHTML; rec.fileClone = fv.cloneNode(true); rec.tag = el.tagName.toLowerCase(); rec.slots = slots(fv); rec.tagCounts = countTags(fv);
       rec.firstText = tn.length ? tn[0].data : null; rec.lastText = tn.length ? tn[tn.length - 1].data : null;
       rec.emptyOrigin = isEmptyLeaf(el);
       if (!rec.emptyOrigin) el.removeAttribute('data-retouch-empty');
     }
+    createdListItems = new WeakSet();
+    cleanupBlobUrls();
+    undoStack.length = 0;
+    redoStack.length = 0;
+    activeTyping = null;
+    if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+    sendUndoState();
     refresh();
   }
   function endAll() {
+    rt.busy();
     for (const [el] of state.edited) {
       el.removeAttribute('contenteditable');
       el.removeAttribute('data-retouch-changed');
       unmarkShape(el);
+      el.removeEventListener('beforeinput', onBeforeInput);
       el.removeEventListener('input', onInput);
       el.removeEventListener('keydown', onKeydown);
       el.removeEventListener('focus', onFocus);
       el.removeEventListener('blur', onBlur);
     }
     state.edited.clear();
+    createdListItems = new WeakSet();
     clearFocusPath();
     if (state.hover) { state.hover.removeAttribute('data-retouch-target'); state.hover = null; }
     hidePopover();
     hideImagePanel();
+    cleanupBlobUrls();
+    undoStack.length = 0;
+    redoStack.length = 0;
+    activeTyping = null;
+    if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+    sendUndoState();
     send({ type: 'changes', count: 0, structural: 0 });
   }
   // Wordless cue on entering edit mode: every editable block breathes once, in a quick wave.
@@ -703,19 +1560,31 @@
     });
     let el;
     while ((el = w.nextNode())) if (isTextBearing(el) && !el.closest('[data-retouch-reveal]')) blocks.push(el);
-    blocks.forEach((b, i) => {
-      b.style.animationDelay = Math.min(i * 22, 600) + 'ms';
-      b.setAttribute('data-retouch-reveal', '');
+    rt.ignore(() => {
+      blocks.forEach((b, i) => {
+        b.style.animationDelay = Math.min(i * 22, 600) + 'ms';
+        b.setAttribute('data-retouch-reveal', '');
+      });
     });
-    setTimeout(() => { for (const b of blocks) { b.removeAttribute('data-retouch-reveal'); b.style.animationDelay = ''; if (!b.getAttribute('style')) b.removeAttribute('style'); } }, 1900);
+    setTimeout(() => {
+      rt.ignore(() => {
+        for (const b of blocks) {
+          b.removeAttribute('data-retouch-reveal');
+          b.style.animationDelay = '';
+          if (!b.getAttribute('style')) b.removeAttribute('style');
+        }
+      });
+    }, 1900);
   }
   function setEditing(on) {
     ensureStyle();
     state.editing = on;
-    document.documentElement.classList.toggle('retouch-editing', on);
+    rt.ignore(() => {
+      document.documentElement.classList.toggle('retouch-editing', on);
+    });
     if (on && !state.palette) harvest().then((p) => { state.palette = p; buildPopover(); });
     markEmpties(on);
-    if (on) reveal();
+    if (on) { reveal(); sendUndoState(); }
     if (!on) reset();
   }
 
@@ -745,6 +1614,7 @@
     sel.addRange(range);
   }
   function wrapSelection(tag, setup) {
+    rt.busy();
     const info = selectionInfo();
     if (!info || info.range.collapsed) return null;
     const { range, ed } = info;
@@ -785,6 +1655,7 @@
     return r;
   }
   function unwrap(el, ed) {
+    rt.busy();
     const span = document.createRange();
     span.selectNodeContents(el);
     const { start, end } = offsetsOf(span, ed);
@@ -799,23 +1670,29 @@
   }
   function afterFormat(ed) { refresh(); ed.focus({ preventScroll: true }); positionPopover(); }
   function toggleTag(tag) {
+    rt.busy();
     const info = selectionInfo();
     if (!info) return;
-    const existing = findWrapper(info.range.commonAncestorContainer, ALIAS[tag], info.ed);
-    if (existing) unwrap(existing, info.ed);
-    else { restoreSelection(info.range); wrapSelection(tag); }
+    recordAction(info.ed, () => {
+      const existing = findWrapper(info.range.commonAncestorContainer, ALIAS[tag], info.ed);
+      if (existing) unwrap(existing, info.ed);
+      else { restoreSelection(info.range); wrapSelection(tag); }
+    });
   }
   function setLink(href) {
+    rt.busy();
     const info = selectionInfo();
     if (!info) return;
-    const existing = findWrapper(info.range.commonAncestorContainer, ['a'], info.ed);
-    if (existing) {
-      if (href) existing.setAttribute('href', href); else unwrap(existing, info.ed);
-      afterFormat(info.ed);
-    } else if (href) {
-      restoreSelection(info.range);
-      wrapSelection('a', (a) => a.setAttribute('href', href));
-    }
+    recordAction(info.ed, () => {
+      const existing = findWrapper(info.range.commonAncestorContainer, ['a'], info.ed);
+      if (existing) {
+        if (href) existing.setAttribute('href', href); else unwrap(existing, info.ed);
+        afterFormat(info.ed);
+      } else if (href) {
+        restoreSelection(info.range);
+        wrapSelection('a', (a) => a.setAttribute('href', href));
+      }
+    });
   }
   // Edits the style attribute as text so values keep the page's own spelling (#d9dee3 stays
   // #d9dee3; going through el.style would rewrite it as rgb()).
@@ -828,6 +1705,7 @@
     return map;
   }
   function setInlineStyle(el, prop, value) {
+    rt.busy();
     const map = styleMap(el);
     if (value) map.set(prop, value); else map.delete(prop);
     const text = [...map].map(([k, v]) => `${k}: ${v}`).join('; ');
@@ -836,45 +1714,51 @@
   // Inline style from the page's palette or free-form panel. Empty value removes that property from the nearest
   // styled span (unwrapping it when nothing is left). A collapsed selection or forceBlock styles the whole element.
   function applyStyle(prop, value, forceBlock = false) {
+    rt.busy();
     const info = selectionInfo();
     if (!info) return;
-    const { range, ed } = info;
-    if (forceBlock) {
-      setInlineStyle(ed, prop, value);
-      afterFormat(ed);
-      return;
-    }
-    if (!value) {
-      let el = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
-      while (el && el !== ed.parentElement) {
-        if (el.nodeType === 1 && styleMap(el).has(prop)) {
-          setInlineStyle(el, prop, '');
-          if (el !== ed && el.tagName === 'SPAN' && !el.getAttribute('style') && !el.className) unwrap(el, ed); else afterFormat(ed);
-          return;
-        }
-        el = el.parentElement;
+    recordAction(info.ed, () => {
+      const { range, ed } = info;
+      if (forceBlock) {
+        setInlineStyle(ed, prop, value);
+        afterFormat(ed);
+        return;
       }
-      return;
-    }
-    if (range.collapsed) { setInlineStyle(ed, prop, value); afterFormat(ed); return; }
-    const existing = findWrapper(range.commonAncestorContainer, ['span'], ed);
-    if (existing && existing.textContent === range.toString()) { setInlineStyle(existing, prop, value); afterFormat(ed); return; }
-    restoreSelection(range);
-    wrapSelection('span', (s) => setInlineStyle(s, prop, value));
+      if (!value) {
+        let el = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
+        while (el && el !== ed.parentElement) {
+          if (el.nodeType === 1 && styleMap(el).has(prop)) {
+            setInlineStyle(el, prop, '');
+            if (el !== ed && el.tagName === 'SPAN' && !el.getAttribute('style') && !el.className) unwrap(el, ed); else afterFormat(ed);
+            return;
+          }
+          el = el.parentElement;
+        }
+        return;
+      }
+      if (range.collapsed) { setInlineStyle(ed, prop, value); afterFormat(ed); return; }
+      const existing = findWrapper(range.commonAncestorContainer, ['span'], ed);
+      if (existing && existing.textContent === range.toString()) { setInlineStyle(existing, prop, value); afterFormat(ed); return; }
+      restoreSelection(range);
+      wrapSelection('span', (s) => setInlineStyle(s, prop, value));
+    });
   }
   function applyClass(name, inlineSafe) {
+    rt.busy();
     const info = selectionInfo();
     if (!info) return;
-    const { range, ed } = info;
-    if (!inlineSafe || range.collapsed) { ed.classList.toggle(name); afterFormat(ed); return; }
-    const existing = findWrapper(range.commonAncestorContainer, ['span'], ed);
-    if (existing && existing.classList.contains(name)) {
-      existing.classList.remove(name);
-      if (!existing.className && !existing.getAttribute('style')) unwrap(existing, ed); else afterFormat(ed);
-      return;
-    }
-    restoreSelection(range);
-    wrapSelection('span', (s) => s.classList.add(name));
+    recordAction(info.ed, () => {
+      const { range, ed } = info;
+      if (!inlineSafe || range.collapsed) { ed.classList.toggle(name); afterFormat(ed); return; }
+      const existing = findWrapper(range.commonAncestorContainer, ['span'], ed);
+      if (existing && existing.classList.contains(name)) {
+        existing.classList.remove(name);
+        if (!existing.className && !existing.getAttribute('style')) unwrap(existing, ed); else afterFormat(ed);
+        return;
+      }
+      restoreSelection(range);
+      wrapSelection('span', (s) => s.classList.add(name));
+    });
   }
 
   // ---------- harvesting the page's own styles ----------
@@ -986,11 +1870,43 @@
   const ROOT_SEL = /^(:root|html|body)$/i;
   const rootSelector = (text) => String(text || '').split(',').some((s2) => ROOT_SEL.test(s2.trim()));
 
+  function matchesRootOrBodyOverride(selectorText) {
+    const parts = String(selectorText || '').split(',');
+    for (const part of parts) {
+      const sel = part.trim();
+      if (!sel || ROOT_SEL.test(sel)) continue;
+      try {
+        if (document.documentElement && document.documentElement.matches(sel)) return true;
+        if (document.body && document.body.matches(sel)) return true;
+      } catch (e) {}
+    }
+    return false;
+  }
+
   function themeRules(list, media, out) {
     for (const r of list) {
       if (r.type === CSSRule.STYLE_RULE) { if (rootSelector(r.selectorText)) out.push({ rule: r, media }); }
       else if (r.type === CSSRule.MEDIA_RULE) themeRules(r.cssRules, r.media.mediaText || media, out);
       else if (r.cssRules) themeRules(r.cssRules, media, out);
+    }
+  }
+
+  function themeOverrideRules(list, media, out) {
+    for (const r of list) {
+      if (r.type === CSSRule.STYLE_RULE) {
+        if (matchesRootOrBodyOverride(r.selectorText)) {
+          if (!media || (window.matchMedia && window.matchMedia(media).matches)) {
+            out.push({ rule: r, media });
+          }
+        }
+      } else if (r.type === CSSRule.MEDIA_RULE) {
+        const m = r.media.mediaText || media;
+        if (!m || (window.matchMedia && window.matchMedia(m).matches)) {
+          themeOverrideRules(r.cssRules, m, out);
+        }
+      } else if (r.cssRules) {
+        themeOverrideRules(r.cssRules, media, out);
+      }
     }
   }
 
@@ -1008,6 +1924,7 @@
   function harvestTheme() {
     const probe = document.createElement('span');
     const found = [];
+    const overrides = [];
     for (const sheet of document.styleSheets) {
       if (sheet.ownerNode && sheet.ownerNode.matches && sheet.ownerNode.matches(UI)) continue;
       const inline = !!(sheet.ownerNode && sheet.ownerNode.tagName === 'STYLE');
@@ -1022,6 +1939,19 @@
           const value = rule.style.getPropertyValue(property).trim();
           if (!value || !isColorValue(probe, value)) continue;
           found.push({ property, value, media: media || null, source: inline ? 'inline' : 'linked', href: sheet.href || null });
+        }
+      }
+      themeOverrideRules(list, null, overrides);
+    }
+    for (const { rule, media } of overrides) {
+      for (const property of Array.from(rule.style)) {
+        if (!property.startsWith('--')) continue;
+        const value = rule.style.getPropertyValue(property).trim();
+        if (!value) continue;
+        for (const item of found) {
+          if (item.property === property && (!item.media || item.media === (media || null))) {
+            item.overriddenBy = rule.selectorText;
+          }
         }
       }
     }
@@ -1068,6 +1998,7 @@
   }
 
   function themePreview(m) {
+    rt.busy();
     const key = m.property + '|' + (m.media || '');
     if (m.value == null) state.theme.delete(key);
     else state.theme.set(key, { property: m.property, media: m.media || null, before: m.before, after: m.value, skip: m.skip || 0, except: m.except || [] });
@@ -1076,6 +2007,7 @@
   }
 
   function resetTheme() {
+    rt.busy();
     state.theme.clear();
     renderThemePreview();
   }
@@ -1083,6 +2015,7 @@
   // After a save the file holds the new values, so write them into the page's own rules too and drop
   // the preview. A fresh harvest then reports the saved value as the original, as it should.
   function commitTheme() {
+    rt.busy();
     if (!state.theme.size) return;
     const targets = new Map();
     for (const sheet of document.styleSheets) {
@@ -1180,19 +2113,23 @@
         const hb = el('button', { class: activeHeadTag === h.tag ? 'active' : '', title: h.title, text: h.text });
         hb.addEventListener('click', () => {
           if (!ed) return;
-          let target = ed;
-          if (target.tagName === 'UL' || target.tagName === 'OL') target = unwrapList(target);
-          if (target.tagName.toLowerCase() !== h.tag) swapTag(target, h.tag);
+          recordAction(ed, () => {
+            let target = ed;
+            if (target.tagName === 'UL' || target.tagName === 'OL') target = unwrapList(target);
+            if (target.tagName.toLowerCase() !== h.tag) target = swapTag(target, h.tag);
+            return target;
+          });
           openMenu('advanced', true);
         });
         headingPill.appendChild(hb);
       }
       row1.appendChild(headingPill);
 
-      // 2. List Toggles (Bullets & Numbered)
+      // 2. List Toggles (Bullets & Numbered & Join)
       const listPill = el('div', { class: 'adv-pill' });
       const bulletSvg = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4-2h9v2H6V2zm-4 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4-2h9v2H6V6zm-4 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4-2h9v2H6v-2z"/></svg>';
       const numberSvg = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h2v5H1V4.5h1V2H1V1zm4 1h10v2H5V2zm-4 5h3v1H2v1h2v2H1V7zm4 2h10v2H5V9zm-4 4h3v1H1v-1h2v-1H1v-1h3v4H1v-1zm4 1h10v2H5v-2z"/></svg>';
+      const joinSvg = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-2.5h10v2H5zm-3 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-2.5h10v2H5zm6 4.5L5.8 11h1.4v2h1.6v-2h1.4L8 8.5zM2 13.5h13v2H2z"/></svg>';
 
       const ulBtn = el('button', { class: curTag === 'ul' ? 'active' : '', title: 'Bullet list' }, [svgNode(bulletSvg)]);
       ulBtn.addEventListener('click', () => {
@@ -1210,8 +2147,114 @@
         openMenu('advanced', true);
       });
 
+      const onlyWhitespaceBetween = (a, b) => {
+        let cur = a.nextSibling;
+        while (cur && cur !== b) {
+          if (cur.nodeType === Node.TEXT_NODE) {
+            if (cur.data.trim().length > 0) return false;
+          } else if (cur.nodeType !== Node.COMMENT_NODE) {
+            return false;
+          }
+          cur = cur.nextSibling;
+        }
+        return true;
+      };
+
+      let canJoin = false;
+      let joinTitle = 'Join next paragraph into this list';
+      const isList = ed && (ed.tagName === 'UL' || ed.tagName === 'OL');
+      const nextSiblingEl = ed ? ed.nextElementSibling : null;
+      if (isList && nextSiblingEl && nextSiblingEl.tagName === 'P' && nextSiblingEl.textContent.trim().length > 0) {
+        if (onlyWhitespaceBetween(ed, nextSiblingEl)) {
+          let blocked = false;
+          for (const [el, pRec] of [...state.edited.entries()]) {
+            if (el === nextSiblingEl || nextSiblingEl.contains(el)) {
+              const d = diffElement(el, pRec);
+              const isChanged = d.kind === 'structural' || d.kind === 'element' || (d.changes && d.changes.length > 0);
+              if (isChanged) {
+                blocked = true;
+              } else {
+                release(el);
+              }
+            }
+          }
+          if (blocked) {
+            joinTitle = 'Save first, then join';
+          } else {
+            canJoin = true;
+          }
+        }
+      }
+
+      const joinAttrs = { title: joinTitle };
+      if (!canJoin) joinAttrs.disabled = '';
+      const joinBtn = el('button', joinAttrs, [svgNode(joinSvg)]);
+      joinBtn.addEventListener('click', () => {
+        rt.busy();
+        if (!canJoin || !ed) return;
+        const nextP = ed.nextElementSibling;
+        if (!nextP || nextP.tagName !== 'P') return;
+        const rec = state.edited.get(ed);
+        if (!rec) return;
+
+        closeTypingBurst();
+        const listBefore = takeSnapshot(ed);
+        const pParent = nextP.parentNode;
+        const pNextSibling = nextP.nextSibling;
+        const pHtml = nextP.innerHTML;
+        const pFileView = fileView(nextP).cloneNode(true);
+
+        if (!rec.absorbed) rec.absorbed = [];
+        const comments = [];
+        let sib = ed.nextSibling;
+        while (sib && sib !== nextP) {
+          if (sib.nodeType === Node.COMMENT_NODE) comments.push(sib);
+          sib = sib.nextSibling;
+        }
+        const tn = textNodes(nextP).filter((n) => n.data.trim());
+        rec.absorbed.push({
+          tag: 'p',
+          firstText: tn.length ? tn[0].data : null,
+          lastText: tn.length ? tn[tn.length - 1].data : null,
+          tagCounts: countTags(nextP),
+          node: nextP,
+          html: nextP.innerHTML,
+          commentsBefore: comments
+        });
+        for (const c of comments) ed.appendChild(c);
+        const lastLi = ed.querySelector(':scope > li:last-child') || ed.lastElementChild;
+        const newLi = document.createElement('li');
+        if (lastLi) {
+          copyAttributesAndSeed(lastLi, newLi);
+        }
+        while (nextP.firstChild) newLi.appendChild(nextP.firstChild);
+        ed.appendChild(newLi);
+        createdListItems.add(newLi);
+        nextP.remove();
+
+        const listAfter = takeSnapshot(ed);
+        pushStep({
+          kind: 'join',
+          listNode: ed,
+          listBefore,
+          listAfter,
+          paragraph: {
+            node: nextP,
+            parent: pParent,
+            nextSibling: pNextSibling,
+            html: pHtml,
+            fileViewClone: pFileView
+          },
+          comments
+        });
+
+        refresh();
+        openMenu('advanced', true);
+      });
+
       listPill.appendChild(ulBtn);
       listPill.appendChild(olBtn);
+      listPill.appendChild(joinBtn);
       row1.appendChild(listPill);
 
       // 3. Underline & Strikethrough
@@ -1389,20 +2432,25 @@
     panel.appendChild(file);
     replace.addEventListener('click', () => file.click());
     file.addEventListener('change', async () => {
+      rt.busy();
       const f = file.files && file.files[0];
       const img = state.imgTarget;
       if (!f || !img) return;
       const buffer = await f.arrayBuffer();
       const id = Math.random().toString(36).slice(2);
-      const rec = imageRecord(img);
       const named = await new Promise((resolve) => {
         state.pending.set(id, resolve);
         send({ type: 'image-picked', id, name: f.name, mime: f.type, buffer });
         setTimeout(() => { if (state.pending.has(id)) { state.pending.delete(id); resolve(null); } }, 4000);
       });
       if (!named) { meta.textContent = 'Could not hand the image to Retouch. Try again.'; return; }
-      if (rec.blobUrl) URL.revokeObjectURL(rec.blobUrl);
-      rec.blobUrl = URL.createObjectURL(new Blob([buffer], { type: f.type }));
+      rt.busy();
+      closeTypingBurst();
+      const before = takeImageSnapshot(img);
+      const rec = imageRecord(img);
+      const blobUrl = URL.createObjectURL(new Blob([buffer], { type: f.type }));
+      activeBlobUrls.add(blobUrl);
+      rec.blobUrl = blobUrl;
       rec.newSrc = named;
       rec.pendingId = id;
       img.setAttribute('data-retouch-src', named);
@@ -1415,12 +2463,21 @@
       file.value = '';
       refresh();
       positionImagePanel();
+      const after = takeImageSnapshot(img);
+      pushStep({
+        kind: 'image',
+        img,
+        before,
+        after
+      });
     });
     restore.addEventListener('click', () => {
+      rt.busy();
       const img = state.imgTarget;
       const rec = img && state.images.get(img);
       if (!rec) return;
-      if (rec.blobUrl) URL.revokeObjectURL(rec.blobUrl);
+      closeTypingBurst();
+      const before = takeImageSnapshot(img);
       if (rec.originalSrc == null) img.removeAttribute('src'); else img.setAttribute('src', rec.originalSrc);
       if (rec.originalAlt == null) img.removeAttribute('alt'); else img.setAttribute('alt', rec.originalAlt);
       img.removeAttribute('data-retouch-src');
@@ -1431,16 +2488,38 @@
       const picWarn = hasSources ? ' · picture has responsive <source> variants Retouch won\'t update' : '';
       meta.textContent = (img.getAttribute('src') || '').split('/').pop().slice(0, 48) + picWarn;
       alt.value = img.getAttribute('alt') || '';
+      restore.style.display = 'none';
       refresh();
+      const after = takeImageSnapshot(img);
+      pushStep({
+        kind: 'image',
+        img,
+        before,
+        after
+      });
     });
     const applyAlt = () => {
+      rt.busy();
       const img = state.imgTarget;
       if (!img) return;
+      const prevAlt = img.getAttribute('alt') || '';
+      const existingRec = state.images.get(img);
+      const prevNewAlt = existingRec && existingRec.newAlt != null ? existingRec.newAlt : prevAlt;
+      if (alt.value === prevNewAlt && alt.value === prevAlt && !existingRec) return;
+      closeTypingBurst();
+      const before = takeImageSnapshot(img);
       const rec = imageRecord(img);
       rec.newAlt = alt.value;
       img.setAttribute('alt', alt.value);
       restore.style.display = '';
       refresh();
+      const after = takeImageSnapshot(img);
+      pushStep({
+        kind: 'image',
+        img,
+        before,
+        after
+      });
     };
     apply.addEventListener('click', applyAlt);
     alt.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); applyAlt(); } if (e.key === 'Escape') hideImagePanel(); });
@@ -1510,7 +2589,8 @@
   // D21: marks derive from the page's own text color, the same formula the editing marks use.
   const markColorFor = (el) => `color-mix(in srgb, #f4c05f 78%, ${getComputedStyle(el).color})`;
   function previewOf(el) {
-    const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    const fv = fileView(el);
+    const text = (fv.textContent || '').replace(/\s+/g, ' ').trim();
     return text.length > 80 ? text.slice(0, 80) : text;
   }
   function ensureOverlay() {
@@ -1554,8 +2634,71 @@
       if (state.activeCard && state.activeCard.id === id) positionCard(state.activeCard.el, target);
     }
   }
+  let resizePosTimer = null;
   window.addEventListener('scroll', () => { if (state.promptMode) queueReposition(); }, true);
-  window.addEventListener('resize', () => { if (state.promptMode) queueReposition(); });
+  window.addEventListener('resize', () => {
+    if (!state.promptMode) return;
+    queueReposition();
+    clearTimeout(resizePosTimer);
+    resizePosTimer = setTimeout(sendPositions, 120);
+  });
+  function collectSections() {
+    function scan(selector) {
+      const out = [];
+      for (const h of document.querySelectorAll(selector)) {
+        if (isUi(h)) continue;
+        if (h.closest && h.closest('[hidden], template, dialog:not([open])')) continue;
+        const cs = window.getComputedStyle(h);
+        if (!cs || cs.display === 'none' || cs.visibility === 'hidden') continue;
+        const rect = h.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) continue;
+        const raw = (h.innerText || h.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!raw) continue;
+        const label = raw.length > 18 ? raw.slice(0, 18).trimEnd() + '…' : raw;
+        if (out.length > 0 && out[out.length - 1].label.toLowerCase() === label.toLowerCase()) continue;
+        const y = Math.max(0, Math.round(rect.top + window.scrollY));
+        out.push({ y, label });
+      }
+      return out;
+    }
+    let list = scan('h1, h2');
+    if (list.length < 2) list = scan('h1, h2, h3');
+    list.sort((a, b) => a.y - b.y);
+    const deduped = [];
+    for (const item of list) {
+      if (deduped.length > 0) {
+        const prev = deduped[deduped.length - 1];
+        if (prev.label.toLowerCase() === item.label.toLowerCase() || Math.abs(prev.y - item.y) < 8) continue;
+      }
+      deduped.push(item);
+    }
+    if (deduped.length > 8) {
+      const spread = [];
+      for (let i = 0; i < 8; i++) {
+        spread.push(deduped[Math.floor((i * deduped.length) / 8)]);
+      }
+      return spread;
+    }
+    return deduped;
+  }
+  function sendPositions() {
+    const positions = [];
+    for (const [id, record] of state.pins) {
+      let y = 0;
+      if (record.kind === 'region' && record.box) {
+        y = Math.round(record.box.y);
+      } else {
+        const target = state.pinTargets.get(id);
+        if (target && target.getBoundingClientRect) {
+          const rect = target.getBoundingClientRect();
+          y = Math.round(rect.top + window.scrollY);
+        }
+      }
+      positions.push({ id, y });
+    }
+    const docHeight = Math.max(1, document.documentElement.scrollHeight || 1);
+    send({ type: 'prompt-positions', positions, docHeight, sections: collectSections() });
+  }
   function renderPin(record, target) {
     const overlay = ensureOverlay();
     const pin = el('button', { class: 'retouch-pin', type: 'button', 'data-retouch-ui': '', 'data-id': record.id, text: String(record.number) });
@@ -1610,9 +2753,8 @@
 
     let titleText = '';
     if (record.kind === 'region') {
-      const label = 'Region';
-      const quoted = `${Math.round(record.box.width)}×${Math.round(record.box.height)}px`;
-      titleText = `${record.number} · ${label} “${quoted}”`;
+      const near = (record.near || '').trim();
+      titleText = near ? `${record.number} · Box near “${near}”` : `${record.number} · Box`;
     } else {
       const label = capWord(wordForTag(record.tag));
       const quoted = (record.selected || record.preview || record.alt || (record.tag === 'img' ? 'image' : record.tag)).slice(0, 80);
@@ -1667,7 +2809,10 @@
     const built = buildCard(record, target);
     state.activeCard = { id, el: built.el, ta: built.ta, record, dropped: false };
   }
-  function notifyChanged() { send({ type: 'prompt-changed', items: [...state.pins.values()].map((r) => Object.assign({}, r)) }); }
+  function notifyChanged() {
+    send({ type: 'prompt-changed', items: [...state.pins.values()].map((r) => Object.assign({}, r)) });
+    sendPositions();
+  }
   function removePin(id) {
     state.pins.delete(id);
     state.pinTargets.delete(id);
@@ -1724,10 +2869,28 @@
     overlaps.sort((a, b) => b.area - a.area);
     const topOverlaps = overlaps.slice(0, 8).map(({ area, ...rest }) => rest);
 
+    let near = '';
+    const cx = box.x + box.width / 2 - window.scrollX;
+    const cy = box.y + box.height / 2 - window.scrollY;
+    let hit = null;
+    rt.ignore(() => {
+      if (state.overlay) state.overlay.style.display = 'none';
+      hit = document.elementFromPoint(cx, cy);
+      if (state.overlay) state.overlay.style.display = '';
+    });
+    if (hit && !isUi(hit) && hit !== document.body && hit !== document.documentElement) {
+      const raw = (hit.innerText || hit.textContent || '').replace(/\s+/g, ' ').trim();
+      if (raw) near = raw.length > 40 ? raw.slice(0, 40).trimEnd() + '…' : raw;
+    }
+    if (!near && topOverlaps.length && topOverlaps[0].preview) {
+      const raw = topOverlaps[0].preview.replace(/\s+/g, ' ').trim();
+      if (raw) near = raw.length > 40 ? raw.slice(0, 40).trimEnd() + '…' : raw;
+    }
+
     const number = ++state.pinSeq;
     const id = 'pin' + number;
     const record = {
-      id, number, kind: 'region', box, overlaps: topOverlaps, request: '', createdAt: Date.now()
+      id, number, kind: 'region', box, near, overlaps: topOverlaps, request: '', createdAt: Date.now()
     };
     state.pins.set(id, record);
     state.pinTargets.set(id, record);
@@ -1769,40 +2932,246 @@
     ensureStyle();
     state.promptMode = on;
     state.promptTool = 'pointer';
-    document.documentElement.classList.toggle('retouch-prompt', on);
+    rt.ignore(() => {
+      document.documentElement.classList.toggle('retouch-prompt', on);
+    });
     if (state.promptHover) { state.promptHover.removeAttribute('data-retouch-prompt-hover'); state.promptHover = null; }
     closeCard();
     for (const id of [...state.pins.keys()]) { removePin(id); }
     if (state.overlay) { state.overlay.remove(); state.overlay = null; }
     state.pins.clear();
     state.pinTargets.clear();
+    if (on) sendPositions();
+  }
+
+  function isCaretAtStart(range, li) {
+    if (!range.collapsed) return false;
+    const pre = document.createRange();
+    pre.setStart(li, 0);
+    pre.setEnd(range.startContainer, range.startOffset);
+    return pre.toString() === '' && !pre.cloneContents().querySelector('img');
+  }
+  function isCaretAtEnd(range, li) {
+    if (!range.collapsed) return false;
+    const post = document.createRange();
+    post.setStart(range.startContainer, range.startOffset);
+    post.setEnd(li, li.childNodes.length);
+    return post.toString() === '' && !post.cloneContents().querySelector('img');
+  }
+
+  function removeEmptyWrappers(root) {
+    rt.busy();
+    let removed;
+    do {
+      removed = false;
+      for (const e of root.querySelectorAll('strong,b,em,i,code,a,span,u,s,strike,del')) {
+        if (!e.textContent && !e.children.length && !e.matches(UI)) {
+          e.remove();
+          removed = true;
+        }
+      }
+    } while (removed);
   }
 
   // ---------- events ----------
   function onKeydown(e) {
+    rt.busy();
     // The host page may have its own document-level keydown listeners (slide decks, carousels,
     // games) that treat space/arrows/etc. as shortcuts; typing here must never reach them. This
     // runs after Retouch's own capture-phase ⌘S listener below, so Save is unaffected.
     e.stopPropagation();
     const mod = e.metaKey || e.ctrlKey;
-    if (mod && !e.shiftKey && !e.altKey) {
+    if (mod && !e.altKey) {
       const k = e.key.toLowerCase();
-      if (k === 'b') { e.preventDefault(); toggleTag('strong'); return; }
-      if (k === 'i') { e.preventDefault(); toggleTag('em'); return; }
-      if (k === 'k') { e.preventDefault(); if (!state.pop) buildPopover(); openMenu('link'); return; }
+      if (!e.shiftKey && k === 'z') { e.preventDefault(); undo(); return; }
+      if ((e.shiftKey && k === 'z') || (!e.shiftKey && k === 'y')) { e.preventDefault(); redo(); return; }
+      if (!e.shiftKey && k === 'b') { e.preventDefault(); toggleTag('strong'); return; }
+      if (!e.shiftKey && k === 'i') { e.preventDefault(); toggleTag('em'); return; }
+      if (!e.shiftKey && k === 'k') { e.preventDefault(); if (!state.pop) buildPopover(); openMenu('link'); return; }
     }
     if (e.key === 'Escape') { e.preventDefault(); if (state.menu && state.menu.classList.contains('on')) hidePopover(); else e.currentTarget.blur(); return; }
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur(); }
+
+    if (e.key.startsWith('Arrow') || e.key === 'Home' || e.key === 'End' || e.key === 'PageUp' || e.key === 'PageDown') {
+      closeTypingBurst();
+    }
+
+    const isList = e.currentTarget.tagName === 'UL' || e.currentTarget.tagName === 'OL';
+    if (!isList) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur(); }
+      return;
+    }
+
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    let li = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
+    while (li && li.parentElement !== e.currentTarget) {
+      li = li.parentElement;
+    }
+    if (!li || li.tagName !== 'LI') {
+      if (range.startContainer === e.currentTarget) {
+        li = e.currentTarget.children[range.startOffset] || e.currentTarget.children[range.startOffset - 1];
+        if (li && li.tagName !== 'LI') li = null;
+      }
+    }
+    if (!li) return;
+
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const listEl = e.currentTarget;
+      recordAction(listEl, () => {
+        rt.busy();
+        if (!range.collapsed) {
+          range.deleteContents();
+        }
+        const listItems = Array.from(listEl.children).filter((c) => c.tagName === 'LI');
+        const isEmpty = isListItemEmpty(li);
+        if (isEmpty && listItems.length > 1) {
+          li.remove();
+          refresh();
+          listEl.blur();
+          return listEl;
+        }
+        const afterRange = document.createRange();
+        afterRange.setStart(range.startContainer, range.startOffset);
+        afterRange.setEnd(li, li.childNodes.length);
+        const frag = afterRange.extractContents();
+
+        const newLi = document.createElement('li');
+        copyAttributesAndSeed(li, newLi);
+        newLi.appendChild(frag);
+        li.after(newLi);
+
+        removeEmptyWrappers(li);
+        removeEmptyWrappers(newLi);
+
+        if (!isEmpty && isListItemEmpty(li)) {
+          if (createdListItems.has(li)) createdListItems.add(newLi);
+          else createdListItems.add(li);
+        } else {
+          createdListItems.add(newLi);
+        }
+
+        const walker = document.createTreeWalker(newLi, NodeFilter.SHOW_TEXT, textFilter);
+        let firstText = walker.nextNode();
+        while (firstText && !firstText.data) {
+          firstText = walker.nextNode();
+        }
+        const newRange = document.createRange();
+        if (firstText) {
+          newRange.setStart(firstText, 0);
+        } else {
+          newRange.setStart(newLi, 0);
+        }
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+
+        refresh();
+        return listEl;
+      });
+      return;
+    }
+
+    if (e.key === 'Backspace') {
+      if (isCaretAtStart(range, li)) {
+        const prevLi = li.previousElementSibling;
+        if (prevLi && prevLi.tagName === 'LI') {
+          e.preventDefault();
+          const listEl = e.currentTarget;
+          recordAction(listEl, () => {
+            rt.busy();
+            let joinNode;
+            let joinOffset;
+            if (prevLi.lastChild && prevLi.lastChild.nodeType === 3) {
+              joinNode = prevLi.lastChild;
+              joinOffset = joinNode.data.length;
+            } else {
+              joinNode = prevLi;
+              joinOffset = prevLi.childNodes.length;
+            }
+            while (li.firstChild) {
+              prevLi.appendChild(li.firstChild);
+            }
+            if (!createdListItems.has(li)) createdListItems.delete(prevLi);
+            li.remove();
+            removeEmptyWrappers(prevLi);
+
+            const newRange = document.createRange();
+            newRange.setStart(joinNode, Math.min(joinOffset, joinNode.nodeType === 3 ? joinNode.data.length : joinNode.childNodes.length));
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+
+            refresh();
+            return listEl;
+          });
+          return;
+        } else {
+          e.preventDefault();
+          return;
+        }
+      }
+    }
+
+    if (e.key === 'Delete') {
+      if (isCaretAtEnd(range, li)) {
+        const nextLi = li.nextElementSibling;
+        if (nextLi && nextLi.tagName === 'LI') {
+          e.preventDefault();
+          const listEl = e.currentTarget;
+          recordAction(listEl, () => {
+            rt.busy();
+            const curContainer = range.startContainer;
+            const curOffset = range.startOffset;
+
+            while (nextLi.firstChild) {
+              li.appendChild(nextLi.firstChild);
+            }
+            if (!createdListItems.has(nextLi)) createdListItems.delete(li);
+            nextLi.remove();
+            removeEmptyWrappers(li);
+
+            const newRange = document.createRange();
+            newRange.setStart(curContainer, Math.min(curOffset, curContainer.nodeType === 3 ? curContainer.data.length : curContainer.childNodes.length));
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+
+            refresh();
+            return listEl;
+          });
+          return;
+        }
+      }
+    }
   }
   document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); send({ type: 'save-request' }); }
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); closeTypingBurst(); send({ type: 'save-request' }); return; }
+    if (state.editing && mod && !e.altKey) {
+      const k = e.key.toLowerCase();
+      if (!e.shiftKey && k === 'z') {
+        e.preventDefault();
+        e.stopPropagation();
+        undo();
+        return;
+      }
+      if ((e.shiftKey && k === 'z') || (!e.shiftKey && k === 'y')) {
+        e.preventDefault();
+        e.stopPropagation();
+        redo();
+        return;
+      }
+    }
   }, true);
   document.addEventListener('mousedown', (e) => {
     if (!state.editing || isUi(e.target)) return;
+    closeTypingBurst();
     if (state.menu && state.menu.classList.contains('on')) hidePopover();
     if (e.target.tagName === 'IMG') { e.preventDefault(); openImagePanel(e.target); return; }
     if (state.imgPanel && state.imgPanel.classList.contains('on')) hideImagePanel();
-    const t = pickTarget(e.target);
+    const t = listUnitFor(pickTarget(e.target));
     if (t) beginEdit(t);
   }, true);
   document.addEventListener('click', (e) => {
@@ -1811,7 +3180,7 @@
   }, true);
   document.addEventListener('mouseover', (e) => {
     if (!state.editing || isUi(e.target)) return;
-    const t = e.target.tagName === 'IMG' ? e.target : pickTarget(e.target);
+    const t = e.target.tagName === 'IMG' ? e.target : listUnitFor(pickTarget(e.target));
     if (t === state.hover) return;
     if (state.hover) { state.hover.removeAttribute('data-retouch-target'); if (!state.hover.hasAttribute('contenteditable')) unmarkShape(state.hover); }
     state.hover = t;
@@ -1857,7 +3226,9 @@
     dragBox.style.width = '0px';
     dragBox.style.height = '0px';
     ensureOverlay().appendChild(dragBox);
-    document.documentElement.classList.add('retouch-prompt-box');
+    rt.ignore(() => {
+      document.documentElement.classList.add('retouch-prompt-box');
+    });
 
     const onMouseMove = (me) => {
       if (!dragBox) return;
@@ -1876,7 +3247,9 @@
     const onMouseUp = (ue) => {
       window.removeEventListener('mousemove', onMouseMove, true);
       window.removeEventListener('mouseup', onMouseUp, true);
-      document.documentElement.classList.remove('retouch-prompt-box');
+      rt.ignore(() => {
+        document.documentElement.classList.remove('retouch-prompt-box');
+      });
       if (!dragBox) return;
       const endX = ue.pageX;
       const endY = ue.pageY;
@@ -1899,6 +3272,7 @@
     if (e.origin !== EXT_ORIGIN || e.source !== window.parent) return;
     const m = e.data || {};
     if (!m.retouch) return;
+    rt.busy();
     switch (m.type) {
       case 'hello': send({ type: 'ready', href: location.href, title: document.title }); break;
       case 'edit': setEditing(!!m.on); break;
@@ -1968,6 +3342,8 @@
         }
         break;
       }
+      case 'undo': undo(); break;
+      case 'redo': redo(); break;
       case 'collect': send(Object.assign({ type: 'collected' }, collect())); break;
       case 'reset': reset(); break;
       case 'theme': send({ type: 'theme', items: harvestTheme() }); break;
@@ -1977,6 +3353,6 @@
       case 'image-named': { const r = state.pending.get(m.id); if (r) { state.pending.delete(m.id); r(m.name || null); } break; }
     }
   });
-  window.retouchDebug = window.__retouchDebug = { toggleTag, setLink, applyStyle, applyClass, harvest, harvestTheme, collect, commit, state };
+  window.retouchDebug = window.__retouchDebug = { toggleTag, setLink, applyStyle, applyClass, harvest, harvestTheme, collect, commit, undo, redo, undoStack, redoStack, closeTypingBurst, state };
   send({ type: 'ready', href: location.href, title: document.title });
 })();

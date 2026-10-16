@@ -8,13 +8,20 @@
 </head>
 <body>
 <header id="bar">
-  <a class="lead" href="https://fastretouch.com/" target="_blank" rel="noopener" title="About Retouch">
-    <img class="mark" src="icons/icon.svg" alt="">
-    <span class="app">Retouch</span>
-  </a>
-  <div class="title">
-    <div id="filename" class="name" title=""></div>
-    <div id="status" class="sub">Loading…</div>
+  <div class="bar-left">
+    <a class="lead" href="https://fastretouch.com/" target="_blank" rel="noopener" title="About Retouch">
+      <img class="mark" src="icons/icon.svg" alt="">
+      <span class="app">Retouch</span>
+    </a>
+    <div class="bar-divider" aria-hidden="true"></div>
+    <div class="doc-info" tabindex="0" aria-label="Page details">
+      <span id="title" class="doc-title"></span>
+      <div class="filename-tooltip" role="tooltip">
+        <span class="filename-label">Target file:</span>
+        <kbd id="filename"></kbd>
+      </div>
+    </div>
+    <div id="status" class="status-chip" hidden></div>
   </div>
   <div class="actions">
     <div id="mode" class="segmented" role="group" aria-label="Mode">
@@ -30,6 +37,24 @@
       </button>
     </div>
     <button id="colors" class="btn ghost" hidden title="Change the page's colors">Colors</button>
+    <button id="undo-btn" class="btn ghost icon-btn" hidden disabled title="Undo (⌘Z)" aria-label="Undo">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+        <path d="M4.5 4.5L1.5 7.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M2.5 7.5h7.25a3.75 3.75 0 0 1 3.75 3.75v.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      </svg>
+    </button>
+    <button id="redo-btn" class="btn ghost icon-btn" hidden disabled title="Redo (⌘⇧Z)" aria-label="Redo">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+        <path d="M11.5 4.5l3 3-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M13.5 7.5H6.25A3.75 3.75 0 0 0 2.5 11.25v.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      </svg>
+    </button>
+    <button id="history-btn" class="btn ghost icon-btn" hidden disabled title="History" aria-label="History">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+        <circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M8 4.5v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </button>
     <button id="discard" class="btn ghost" hidden>Discard</button>
     <button id="save" class="btn primary" hidden disabled title="Save (⌘S)">Save<span id="count" class="bubble" hidden aria-live="polite"></span></button>
     <button id="prompt-done" class="close" hidden title="Leave Prompt mode; your requests are kept" aria-label="Leave Prompt mode; your requests are kept">
@@ -47,37 +72,68 @@
     <div id="dropzone" class="dropzone" hidden><span class="dz-icon" aria-hidden="true">⌥</span><span id="dropzone-text">Drop the folder here</span></div>
     <button id="choose" class="btn small primary" hidden>Choose Folder…</button>
     <button id="details" class="btn small" hidden>Copy Details</button>
+    <button id="report" class="btn small" hidden title="Opens an email to the Retouch team with this error; you see it before it is sent">Email us</button>
   </span>
   <button id="dismiss" class="banner-close" title="Dismiss" aria-label="Dismiss">
     <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M 1 1 L 11 11 M 11 1 L 1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
   </button>
 </div>
 <div id="theme" class="pop" hidden role="dialog" aria-label="Page colors"></div>
+<div id="history-pop" class="pop" hidden role="dialog" aria-label="Version history"></div>
 <iframe id="frame" title="Local page"></iframe>
 <div id="dropmat" hidden aria-hidden="true"></div>
-<div id="collector" class="collector" hidden>
-  <button id="collector-handle" class="collector-handle" title="Collapse the collector" aria-label="Collapse the collector"></button>
-  <div id="collector-body" class="collector-body">
-    <div id="collector-stale" class="collector-stale" hidden>
-      <span>This page was updated outside Retouch.</span>
-      <span class="row-actions">
-        <button id="stale-reload" class="btn small primary">Clear and reload</button>
-        <button id="stale-keep" class="btn small ghost">Keep</button>
-      </span>
+<div id="dock" class="dock collapsed" hidden tabindex="0" role="region" aria-label="Prompt notes">
+  <button id="dock-grip" class="dock-grip" type="button" title="Move the notes bar" aria-label="Move the notes bar">
+    <svg viewBox="0 0 8 14" width="8" height="14" aria-hidden="true">
+      <circle cx="2" cy="2.5" r="1.15" fill="currentColor"/>
+      <circle cx="6" cy="2.5" r="1.15" fill="currentColor"/>
+      <circle cx="2" cy="7" r="1.15" fill="currentColor"/>
+      <circle cx="6" cy="7" r="1.15" fill="currentColor"/>
+      <circle cx="2" cy="11.5" r="1.15" fill="currentColor"/>
+      <circle cx="6" cy="11.5" r="1.15" fill="currentColor"/>
+    </svg>
+  </button>
+  <div class="dock-whole-wrap">
+    <button id="whole-btn" class="dock-whole-btn" type="button" title="Note for the whole page">
+      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><rect x="1.8" y="1.8" width="8.4" height="8.4" rx="2" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+      <span>Whole page</span>
+      <span id="whole-dot" class="whole-dot" hidden aria-hidden="true"></span>
+    </button>
+    <div id="whole-bubble" class="whole-bubble" hidden role="dialog" aria-label="Whole page note">
+      <div class="whole-head">
+        <span class="whole-title">Whole page</span>
+        <span class="whole-actions">
+          <button id="whole-save" class="whole-act save" type="button" title="Save request" aria-label="Save request">
+            <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M1.5 6l3.5 3.5 5.5-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+          <button id="whole-del" class="whole-act trash" type="button" title="Delete request" aria-label="Delete request">
+            <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5h7M4.5 3.5V2a1 1 0 011-1h1a1 1 0 011 1v1.5M3.5 3.5v6.5a1 1 0 001 1h3a1 1 0 001-1v-6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+        </span>
+      </div>
+      <textarea id="whole-ta" class="whole-ta" placeholder="What should change across the whole page?"></textarea>
     </div>
-    <div id="collector-head" class="collector-head">
-      <span>Notes for your AI</span>
-      <button id="collector-close" class="collector-close" title="Close notes drawer" aria-label="Close notes drawer">
-        <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
-      </button>
+  </div>
+  <div id="collector-stale" class="dock-stale" hidden>
+    <span class="stale-label">Page changed</span>
+    <button id="stale-reload" class="stale-btn primary" type="button">Reload</button>
+    <button id="stale-keep" class="stale-btn ghost" type="button">Keep</button>
+  </div>
+  <div id="dock-timeline" class="dock-timeline">
+    <div id="dock-track" class="dock-track">
+      <div id="dock-track-fill" class="dock-track-fill"></div>
+      <div id="dock-sections" class="dock-sections" aria-hidden="true"></div>
+      <div id="dock-markers" class="dock-markers"></div>
     </div>
-    <div id="collector-list" class="collector-list"></div>
-    <button id="copy-prompt" class="btn primary collector-btn" disabled title="Copy one prompt with every request, for your AI"><span id="copy-label">Copy instructions for AI</span><span id="copy-count" class="bubble" hidden aria-live="polite"></span></button>
-    <div class="collector-foot">Paste the prompt into your AI. Reload when it's done.</div>
+  </div>
+  <div id="dock-right" class="dock-right">
+    <span id="dock-count" class="dock-count" aria-live="polite"></span>
+    <button id="copy-prompt" class="btn primary dock-copy" type="button" title="Copy one prompt with every request, for your AI"><span id="copy-label">Copy for AI</span></button>
   </div>
 </div>
 <div id="error" class="error" hidden></div>
 <script src="idb.js"></script>
+<script src="history.js"></script>
 <script src="describe.js"></script>
 <script src="patch.js"></script>
 <script src="prompt.js"></script>

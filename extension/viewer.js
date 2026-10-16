@@ -4,19 +4,25 @@
 const params = new URLSearchParams(location.search);
 const src = params.get('src') || '';
 const $ = (id) => document.getElementById(id);
-const els = { frame: $('frame'), filename: $('filename'), status: $('status'), choose: $('choose'), details: $('details'), count: $('count'),
+const els = { bar: $('bar'), frame: $('frame'), title: $('title'), filename: $('filename'), status: $('status'), choose: $('choose'), details: $('details'), report: $('report'), count: $('count'),
   edit: $('edit'), discard: $('discard'), save: $('save'), exit: $('exit'), error: $('error'), colors: $('colors'), theme: $('theme'),
+  undoBtn: $('undo-btn'), redoBtn: $('redo-btn'),
+  historyBtn: $('history-btn'), historyPop: $('history-pop'),
   banner: $('banner'), bannerText: $('banner-text'), dismiss: $('dismiss'),
-  prompt: $('prompt'), promptCount: $('prompt-count'), copyPrompt: $('copy-prompt'), copyLabel: $('copy-label'), copyCount: $('copy-count'), promptDone: $('prompt-done'), collectorHead: $('collector-head'),
+  prompt: $('prompt'), promptCount: $('prompt-count'), copyPrompt: $('copy-prompt'), copyLabel: $('copy-label'), promptDone: $('prompt-done'),
   promptTools: $('prompt-tools'), toolPointer: $('tool-pointer'), toolBox: $('tool-box'),
-  collector: $('collector'), collectorHandle: $('collector-handle'), collectorClose: $('collector-close'), collectorBody: $('collector-body'), collectorList: $('collector-list'),
+  dock: $('dock'), dockGrip: $('dock-grip'), wholeBtn: $('whole-btn'), wholeDot: $('whole-dot'), wholeBubble: $('whole-bubble'), wholeTa: $('whole-ta'), wholeSave: $('whole-save'), wholeDel: $('whole-del'),
+  dockTimeline: $('dock-timeline'), dockTrack: $('dock-track'), dockTrackFill: $('dock-track-fill'), dockSections: $('dock-sections'), dockMarkers: $('dock-markers'),
+  dockRight: $('dock-right'), dockCount: $('dock-count'),
   collectorStale: $('collector-stale'), staleReload: $('stale-reload'), staleKeep: $('stale-keep'),
   dropzone: $('dropzone'), dropzoneText: $('dropzone-text'), dropmat: $('dropmat') };
 
 const state = { pendingGrant: null,
-  editing: false, count: 0, structural: 0, ready: false, saving: false, lastKnownSource: null, pendingCollect: null, log: [],
+  editing: false, count: 0, structural: 0, ready: false, saving: false, lastKnownSource: null, lastBackupId: null, historyCount: 0, pendingCollect: null, log: [],
+  canUndo: false, canRedo: false,
   pendingImages: new Map(), pendingTheme: null,
-  promptMode: false, promptTool: 'pointer', promptItems: [], wholeRequest: '', collectorCollapsed: false, activeItemId: null, wholeTa: null,
+  promptMode: false, promptTool: 'pointer', promptItems: [], wholeRequest: '', activeItemId: null,
+  pinPositions: new Map(), docHeight: 1, sections: [], dockPos: null, sortedMarkerIds: [], wholeBubbleOpen: false,
   pendingCapture: null, pendingRectResolve: null
 };
 const decodedPath = (() => { try { return decodeURIComponent(new URL(src).pathname); } catch (e) { return ''; } })();
@@ -24,41 +30,82 @@ const fileName = decodedPath.split('/').pop();
 const dirPath = decodedPath.slice(0, decodedPath.lastIndexOf('/')) || '/';
 const dirName = dirPath.split('/').pop() || dirPath;
 
-// The subtitle shows the file name. A short confirmation ("Saved at 19:52") replaces it for a few
-// seconds. Anything that needs the user's attention goes in the banner, with its actions inline.
+// The status line is a short-lived chip next to the page title. Errors stay until dismissed
+// or the next action; successes/confirmations disappear after 3.2 s; nothing is shown at rest.
 let statusTimer = null;
 // Every status and every step of a save goes into the diagnostics log and, mirrored, to the console.
 function logLine(line) {
   state.log.push(line);
   console.info('[retouch]', line);
 }
-function setStatus(text, kind) {
-  const attention = kind === 'error' || kind === 'need-folder';
+function setStatus(text, kind, options) {
+  const isError = kind === 'error';
+  const isNeedFolder = kind === 'need-folder';
   clearTimeout(statusTimer);
-  state.transient = !attention && !!text;
-  if (state.transient) statusTimer = setTimeout(() => { state.transient = false; setStatus(''); render(); }, 3200);
-  if (!text) text = fileName;
-  if (attention) {
+  state.transient = !isError && !isNeedFolder && !!text;
+  if (state.transient) {
+    const duration = (options && options.duration) || 3200;
+    statusTimer = setTimeout(() => {
+      state.transient = false;
+      setStatus('');
+      render();
+    }, duration);
+  }
+
+  if (isNeedFolder) {
     els.bannerText.textContent = text;
-    els.banner.className = 'banner' + (kind === 'error' ? ' error' : '');
+    els.banner.className = 'banner';
     els.banner.hidden = false;
-    els.choose.hidden = kind !== 'need-folder';
+    els.choose.hidden = false;
     els.choose.textContent = state.pendingGrant ? 'Allow saving' : `Choose “${dirName}”…`;
-    els.dropzone.hidden = kind !== 'need-folder';
+    els.dropzone.hidden = false;
     els.dropzoneText.textContent = `Drop “${dirName}” here`;
-    els.dropmat.hidden = kind !== 'need-folder';
-    els.details.hidden = kind !== 'error';
-    els.status.textContent = fileName;
-    els.status.className = 'sub';
+    els.dropmat.hidden = false;
+    els.details.hidden = true;
+    els.report.hidden = true;
+  } else if (isError) {
+    els.bannerText.textContent = text;
+    els.banner.className = 'banner error';
+    els.banner.hidden = false;
+    els.choose.hidden = true;
+    els.dropzone.hidden = true;
+    els.dropmat.hidden = true;
+    els.details.hidden = false;
+    els.report.hidden = false;
   } else {
     els.banner.hidden = true;
     els.dropmat.hidden = true;
-    if (els.status.textContent !== (text || '')) {
-      els.status.textContent = text || '';
-      if (els.status.animate) els.status.animate([{ opacity: 0, transform: 'translateY(3px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.8,.2,1)' });
-    }
-    els.status.className = 'sub' + (kind ? ' ' + kind : '');
   }
+
+  // Errors and folder requests live in the banner (full text, actions); the chip would only repeat them.
+  if (text && !isError && !isNeedFolder) {
+    els.status.hidden = false;
+    els.status.textContent = '';
+    if (options && options.actionLabel) {
+      els.status.appendChild(document.createTextNode(text + ' · '));
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'status-action';
+      btn.id = 'status-undo';
+      btn.textContent = options.actionLabel;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (options.onAction) options.onAction();
+      });
+      els.status.appendChild(btn);
+    } else {
+      els.status.textContent = text;
+    }
+    if (els.status.animate) els.status.animate([{ opacity: 0, transform: 'translateY(-3px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    els.status.className = 'status-chip' + (kind ? ' ' + kind : '');
+    els.status.title = isError ? 'Click to dismiss' : '';
+  } else {
+    els.status.hidden = true;
+    els.status.textContent = '';
+    els.status.className = 'status-chip';
+    els.status.title = '';
+  }
+
   if (text) logLine(`${new Date().toISOString()} [${kind || 'info'}] ${text}`);
 }
 async function diagnostics() {
@@ -78,6 +125,13 @@ function render() {
   els.prompt.classList.toggle('active', state.promptMode);
   els.colors.hidden = !state.editing;
   if (!state.editing) closeTheme();
+  els.undoBtn.hidden = !state.editing;
+  els.redoBtn.hidden = !state.editing;
+  els.undoBtn.disabled = !state.canUndo;
+  els.redoBtn.disabled = !state.canRedo;
+  els.historyBtn.hidden = !state.editing;
+  if (!state.editing) closeHistory();
+  els.historyBtn.disabled = state.historyCount === 0;
   els.discard.hidden = !state.editing || pending === 0;
   els.save.hidden = !state.editing;
   els.save.disabled = pending === 0 || state.saving;
@@ -86,9 +140,10 @@ function render() {
   els.promptTools.hidden = !state.promptMode;
   els.toolPointer.classList.toggle('active', state.promptTool === 'pointer');
   els.toolBox.classList.toggle('active', state.promptTool === 'box');
+  els.dock.hidden = !state.promptMode;
+  if (!state.promptMode) closeWholeBubble(true);
   renderPromptCount();
-  els.collector.hidden = !state.promptMode;
-  els.collector.classList.toggle('collapsed', state.collectorCollapsed);
+  renderCollector();
   // The number rides on the Save button like an app badge; the words go under the title.
   if (els.count.textContent !== String(pending) && pending > 0 && !els.count.hidden) {
     els.count.style.animation = 'none'; void els.count.offsetWidth; els.count.style.animation = '';
@@ -100,8 +155,18 @@ function render() {
     ? `${state.count} change${state.count === 1 ? '' : 's'}, ${state.structural} need${state.structural === 1 ? 's' : ''} attention (⌘S)`
     : `Save ${pending} change${pending === 1 ? '' : 's'} (⌘S)`;
   if (!state.transient) {
-    const label = state.editing && pending > 0 ? `${pending} change${pending === 1 ? '' : 's'}${state.structural ? ' · one needs attention' : ''}` : fileName;
-    if (els.status.textContent !== label) { els.status.textContent = label; els.status.className = 'sub'; }
+    const label = state.editing && pending > 0 ? `${pending} change${pending === 1 ? '' : 's'}${state.structural ? ' · one needs attention' : ''}` : '';
+    if (label) {
+      if (els.status.textContent !== label) {
+        els.status.textContent = label;
+        els.status.hidden = false;
+        els.status.className = 'status-chip' + (state.structural ? ' error' : '');
+      }
+    } else if (!els.status.classList.contains('error')) {
+      els.status.hidden = true;
+      els.status.textContent = '';
+      els.status.className = 'status-chip';
+    }
   }
 }
 const post = (msg) => els.frame.contentWindow.postMessage(Object.assign({ retouch: true }, msg), '*');
@@ -116,9 +181,10 @@ if (!/^file:\/\//i.test(src)) {
   fail('Retouch only edits local files. Open an HTML file from your disk (its address starts with <code>file://</code>) and click the Retouch icon again.');
 } else {
   const name = decodeURIComponent(src.split('/').pop().split('?')[0]);
+  els.title.textContent = name;
   els.filename.textContent = name;
-  els.filename.title = decodeURIComponent(src);
   els.status.textContent = '';
+  els.status.hidden = true;
   document.title = `${name} · Retouch`;
 
   window.addEventListener('message', (e) => {
@@ -128,14 +194,24 @@ if (!/^file:\/\//i.test(src)) {
     switch (m.type) {
       case 'ready':
         state.ready = true;
-        // The page's own title is the headline; the file name moves to the line beneath.
-        if (m.title && m.title.trim()) { els.filename.textContent = m.title.trim(); document.title = `${m.title.trim()} · Retouch`; }
-        setStatus('');
+        // The page's own title is shown left-aligned. If no title, show filename.
+        if (m.title && m.title.trim()) {
+          els.title.textContent = m.title.trim();
+          document.title = `${m.title.trim()} · Retouch`;
+        } else {
+          els.title.textContent = fileName;
+          document.title = `${fileName} · Retouch`;
+        }
+        els.filename.textContent = fileName;
+        if (!state.transient) setStatus('');
         if (state.editing) post({ type: 'edit', on: true });
         else if (params.get('fresh') === '1' && !state.welcomed) { state.welcomed = true; setTimeout(toggleEdit, 400); }
         break;
       case 'changes':
         state.count = m.count; state.structural = m.structural; render();
+        break;
+      case 'undo-state':
+        state.canUndo = !!m.canUndo; state.canRedo = !!m.canRedo; render();
         break;
       case 'theme':
         if (state.pendingTheme) { state.pendingTheme(m.items || []); state.pendingTheme = null; }
@@ -147,6 +223,12 @@ if (!/^file:\/\//i.test(src)) {
         state.promptItems = m.items || [];
         savePromptStore();
         renderPromptCount();
+        renderCollector();
+        break;
+      case 'prompt-positions':
+        state.pinPositions = new Map((m.positions || []).map((p) => [p.id, p.y]));
+        state.docHeight = Math.max(1, m.docHeight || 1);
+        state.sections = Array.isArray(m.sections) ? m.sections : [];
         renderCollector();
         break;
       case 'prompt-region-saved':
@@ -202,6 +284,7 @@ if (!/^file:\/\//i.test(src)) {
   els.frame.src = src;
 
   fetch(src, { cache: 'no-store' }).then((r) => r.text()).then((t) => { state.lastKnownSource = t; }).catch(() => {});
+  updateHistoryButton();
 }
 
 function collect() {
@@ -218,6 +301,8 @@ function toggleEdit() {
   }
   if (state.promptMode) { state.promptMode = false; post({ type: 'prompt', on: false }); }
   state.editing = !state.editing;
+  if (!state.editing) state.pendingImages.clear();
+  if (state.editing) updateHistoryButton();
   post({ type: 'edit', on: state.editing });
   setStatus('');
   render();
@@ -244,7 +329,7 @@ async function togglePrompt() {
   render();
 }
 
-// ---------- Prompt collector: persistence, rendering, copy (D-prompt-collector) ----------
+// ---------- Prompt collector dock: persistence, timeline, copy (B2) ----------
 const promptKey = 'prompt:' + src;
 function savePromptStore() { RetouchIDB.set(promptKey, { items: state.promptItems, whole: state.wholeRequest }); }
 RetouchIDB.get(promptKey).then((v) => {
@@ -253,163 +338,406 @@ RetouchIDB.get(promptKey).then((v) => {
   renderCollector();
 });
 
-// The count rides the primary action while collecting (like Save's badge in Edit mode) and sits
-// inside the Prompt segment when idle, so saved requests are visible before the mode is entered.
 function renderPromptCount() {
   const n = state.promptItems.length;
   const whole = (state.wholeRequest || '').trim();
-  els.promptCount.hidden = state.promptMode || n === 0;
-  els.promptCount.textContent = String(n);
-  els.copyCount.hidden = n === 0;
-  els.copyCount.textContent = String(n);
-  els.copyPrompt.disabled = n === 0 && !whole;
-  if (els.collectorHead) els.collectorHead.textContent = n ? `Notes for your AI · ${n}` : 'Notes for your AI';
+  const total = n + (whole ? 1 : 0);
+  els.promptCount.hidden = state.promptMode || total === 0;
+  els.promptCount.textContent = String(total);
+  els.wholeDot.hidden = !whole;
+  els.dockCount.textContent = `${total} ${total === 1 ? 'note' : 'notes'}`;
+  els.copyPrompt.disabled = total === 0;
+  els.dock.classList.toggle('collapsed', total === 0);
 }
 function locationTag(item) {
-  if (item.kind === 'region') return 'REGION';
+  if (item.kind === 'region') return 'Box';
   const WORDS = {
-    h1: 'HEADING', h2: 'HEADING', h3: 'HEADING', h4: 'HEADING', h5: 'HEADING', h6: 'HEADING',
-    p: 'PARAGRAPH', li: 'LIST ITEM', td: 'TABLE CELL', th: 'TABLE CELL', img: 'IMAGE',
-    button: 'BUTTON', a: 'LINK', section: 'SECTION', article: 'SECTION', header: 'SECTION', footer: 'SECTION'
+    h1: 'Heading', h2: 'Heading', h3: 'Heading', h4: 'Heading', h5: 'Heading', h6: 'Heading',
+    p: 'Paragraph', li: 'List item', td: 'Table cell', th: 'Table cell', img: 'Image',
+    button: 'Button', a: 'Link', section: 'Section', article: 'Section', header: 'Section', footer: 'Section'
   };
-  return WORDS[item.tag] || (item.tag || 'BLOCK').toUpperCase();
+  if (WORDS[item.tag]) return WORDS[item.tag];
+  const fallback = (item.tag || 'Block').toLowerCase();
+  return fallback.charAt(0).toUpperCase() + fallback.slice(1);
 }
 function locationTitle(item) {
-  if (item.kind === 'region') return `${Math.round(item.box.width)}×${Math.round(item.box.height)}px`;
-  if (item.tag === 'img') return `“${(item.alt || item.src || 'image').slice(0, 50)}”`;
-  const quoted = (item.selected || item.preview || '').slice(0, 50);
-  return quoted ? `“${quoted}”` : '';
+  if (item.kind === 'region') {
+    const near = (item.near || '').trim();
+    return near ? `“${near}”` : '';
+  }
+  if (item.tag === 'img') return `“${(item.alt || item.src || 'image').slice(0, 40)}”`;
+  const quoted = (item.selected || item.preview || '').trim();
+  if (!quoted) return '';
+  const short = quoted.length > 36 ? quoted.slice(0, 36).trimEnd() + '…' : quoted;
+  return `“${short}”`;
 }
+function humanLabel(item) {
+  const tag = locationTag(item);
+  const title = locationTitle(item);
+  if (item.kind === 'region') return title ? `Box near ${title}` : 'Box';
+  return title ? `${tag} ${title}` : tag;
+}
+
+function sectionForY(y) {
+  let match = null;
+  for (const s of state.sections) {
+    if (s.y <= y + 8) match = s;
+    else break;
+  }
+  return match;
+}
+
+function updateDockFlip() {
+  if (els.dock.hidden) return;
+  const frameRect = els.frame.getBoundingClientRect();
+  const dockRect = els.dock.getBoundingClientRect();
+  const dockMidY = dockRect.top + dockRect.height / 2;
+  const frameMidY = frameRect.top + frameRect.height / 2;
+  els.dock.classList.toggle('flip-preview', dockMidY < frameMidY);
+}
+
+function clampDockPosition(left, top) {
+  const frameRect = els.frame.getBoundingClientRect();
+  const barRect = els.bar.getBoundingClientRect();
+  const dockRect = els.dock.getBoundingClientRect();
+  const minLeft = Math.round(frameRect.left);
+  const maxLeft = Math.max(minLeft, Math.round(frameRect.right - dockRect.width));
+  const minTop = Math.round(Math.max(frameRect.top, barRect.bottom));
+  const maxTop = Math.max(minTop, Math.round(frameRect.bottom - dockRect.height));
+  return {
+    left: Math.max(minLeft, Math.min(maxLeft, Math.round(left))),
+    top: Math.max(minTop, Math.min(maxTop, Math.round(top)))
+  };
+}
+
+function applyDockPosition(left, top) {
+  const clamped = clampDockPosition(left, top);
+  const bodyRect = document.body.getBoundingClientRect();
+  state.dockPos = clamped;
+  els.dock.classList.add('moved');
+  els.dock.style.left = `${Math.round(clamped.left - bodyRect.left)}px`;
+  els.dock.style.top = `${Math.round(clamped.top - bodyRect.top)}px`;
+  els.dock.style.bottom = 'auto';
+  els.dock.style.transform = 'none';
+  updateDockFlip();
+}
+
+function resetDockPosition() {
+  state.dockPos = null;
+  els.dock.classList.remove('moved', 'flip-preview');
+  els.dock.style.left = '';
+  els.dock.style.top = '';
+  els.dock.style.bottom = '';
+  els.dock.style.transform = '';
+}
+
+function setActiveMarker(id) {
+  state.activeItemId = id;
+  updateDockFlip();
+  for (const m of els.dockMarkers.querySelectorAll('.dock-marker')) {
+    m.classList.toggle('active', m.dataset.id === id);
+  }
+  const item = id ? state.promptItems.find((i) => i.id === id) : null;
+  post({ type: 'prompt-hover', id: item && !item.lost ? item.id : null });
+}
+
 function renderCollector() {
-  els.collectorList.textContent = '';
-  if (!state.promptItems.length && !state.wholeRequest) {
-    const p = document.createElement('div');
-    p.className = 'collector-empty';
-    p.textContent = 'Click anything on the page to add it to your prompt.';
-    els.collectorList.appendChild(p);
+  renderPromptCount();
+  if (state.dockPos && !els.dock.hidden) {
+    applyDockPosition(state.dockPos.left, state.dockPos.top);
+  } else {
+    updateDockFlip();
   }
-  for (const item of state.promptItems) {
-    const row = document.createElement('div');
-    row.className = 'collector-row' + (item.lost ? ' lost' : '') + (item.id === state.activeItemId ? ' active' : '');
-    
-    const head = document.createElement('div');
-    head.className = 'row-head';
+  const getY = (item) => {
+    if (state.pinPositions.has(item.id)) return state.pinPositions.get(item.id);
+    if (item.kind === 'region' && item.box) return item.box.y || 0;
+    return 0;
+  };
+  const sorted = [...state.promptItems].sort((a, b) => (getY(a) - getY(b)) || ((a.number || 0) - (b.number || 0)));
+  state.sortedMarkerIds = sorted.map((i) => i.id);
+  if (state.activeItemId && !state.sortedMarkerIds.includes(state.activeItemId)) {
+    state.activeItemId = null;
+  }
 
-    const info = document.createElement('div');
-    info.className = 'row-info';
-
-    const tag = document.createElement('span');
-    tag.className = 'row-tag';
-    tag.textContent = locationTag(item);
-    info.appendChild(tag);
-
-    const title = locationTitle(item);
-    if (title) {
-      const titleEl = document.createElement('div');
-      titleEl.className = 'row-title';
-      titleEl.textContent = title;
-      info.appendChild(titleEl);
+  const trackW = els.dockTrack.clientWidth || 440;
+  const pad = 13;
+  const minGap = 26;
+  const minX = pad;
+  const maxX = Math.max(pad, trackW - pad);
+  const usable = Math.max(0, maxX - minX);
+  const docH = Math.max(1, state.docHeight || 1);
+  const xs = sorted.map((item) => {
+    const r = Math.max(0, Math.min(1, getY(item) / docH));
+    return minX + r * usable;
+  });
+  for (let i = 1; i < xs.length; i++) {
+    if (xs[i] < xs[i - 1] + minGap) xs[i] = xs[i - 1] + minGap;
+  }
+  if (xs.length > 0 && xs[xs.length - 1] > maxX) {
+    xs[xs.length - 1] = maxX;
+    for (let i = xs.length - 2; i >= 0; i--) {
+      if (xs[i] > xs[i + 1] - minGap) xs[i] = Math.max(minX, xs[i + 1] - minGap);
     }
-    head.appendChild(info);
+    if (xs.length > 1) {
+      const effGap = Math.min(minGap, usable / (xs.length - 1));
+      for (let i = 1; i < xs.length; i++) {
+        if (xs[i] < xs[i - 1] + effGap) xs[i] = xs[i - 1] + effGap;
+      }
+    }
+  }
 
-    const delBtn = document.createElement('button');
-    delBtn.className = 'row-del';
-    delBtn.type = 'button';
-    delBtn.title = 'Delete this request';
-    delBtn.ariaLabel = 'Delete this request';
-    delBtn.innerHTML = '<svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2.5 3.5h7M4.5 3.5V2a1 1 0 011-1h1a1 1 0 011 1v1.5M3.5 3.5v6.5a1 1 0 001 1h3a1 1 0 001-1v-6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
-    delBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      post({ type: 'prompt-remove', id: item.id });
-    });
-    head.appendChild(delBtn);
-    row.appendChild(head);
+  if (xs.length > 0 && trackW > 0) {
+    const maxPct = Math.max(0, Math.min(100, (xs[xs.length - 1] / trackW) * 100));
+    els.dockTrackFill.style.width = `${maxPct.toFixed(1)}%`;
+  } else if ((state.wholeRequest || '').trim()) {
+    els.dockTrackFill.style.width = '100%';
+  } else {
+    els.dockTrackFill.style.width = '0%';
+  }
 
-    const reqTa = document.createElement('textarea');
-    reqTa.className = 'req-input';
-    reqTa.placeholder = 'What should change here?';
-    reqTa.value = item.request || '';
-    reqTa.addEventListener('click', (e) => e.stopPropagation());
-    reqTa.addEventListener('input', () => {
-      item.request = reqTa.value;
-    });
-    const commitEdit = () => {
-      const val = reqTa.value.trim();
-      post({ type: 'prompt-update', id: item.id, request: val });
+  els.dockSections.textContent = '';
+  const secEntries = state.sections.map((sec) => {
+    const r = Math.max(0, Math.min(1, (sec.y || 0) / docH));
+    const secX = Math.round(minX + r * usable);
+    const wrap = document.createElement('div');
+    wrap.className = 'dock-section';
+    wrap.style.left = `${secX}px`;
+    const tick = document.createElement('span');
+    tick.className = 'dock-section-tick';
+    const labelEl = document.createElement('span');
+    labelEl.className = 'dock-section-label';
+    labelEl.textContent = sec.label;
+    wrap.append(tick, labelEl);
+    els.dockSections.appendChild(wrap);
+    const w = labelEl.offsetWidth || Math.ceil((sec.label || '').length * 5.8);
+    const half = w / 2;
+    const center = Math.max(half, Math.min(Math.max(half, trackW - half), secX));
+    labelEl.style.left = `${Math.round(center - secX)}px`;
+    const markerDist = xs.length ? Math.min(...xs.map((mx) => Math.abs(mx - secX))) : Infinity;
+    return {
+      sec,
+      secX,
+      labelEl,
+      leftEdge: center - half,
+      rightEdge: center + half,
+      markerDist
     };
-    reqTa.addEventListener('blur', commitEdit);
-    reqTa.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); reqTa.blur(); }
-    });
-    row.appendChild(reqTa);
+  });
+  const keptSecs = [];
+  for (const curr of secEntries) {
+    while (keptSecs.length > 0) {
+      const prev = keptSecs[keptSecs.length - 1];
+      if (prev.rightEdge + 8 <= curr.leftEdge) break;
+      if (curr.markerDist < prev.markerDist) {
+        prev.labelEl.hidden = true;
+        keptSecs.pop();
+      } else {
+        curr.labelEl.hidden = true;
+        break;
+      }
+    }
+    if (!curr.labelEl.hidden) keptSecs.push(curr);
+  }
 
-    if (item.lost) {
-      const note = document.createElement('span');
-      note.className = 'lost-note';
-      note.textContent = 'Not on this page any more';
-      row.appendChild(note);
+  els.dockMarkers.textContent = '';
+  sorted.forEach((item, idx) => {
+    const marker = document.createElement('div');
+    marker.className = 'dock-marker' + (item.lost ? ' lost' : '') + (item.id === state.activeItemId ? ' active' : '');
+    marker.dataset.id = item.id;
+    marker.dataset.number = String(item.number);
+    marker.style.left = `${Math.round(xs[idx])}px`;
+
+    const dot = document.createElement('div');
+    dot.className = 'dock-marker-dot';
+    dot.textContent = String(item.number);
+    marker.appendChild(dot);
+
+    const preview = document.createElement('div');
+    preview.className = 'dock-preview';
+
+    const top = document.createElement('div');
+    top.className = 'preview-top';
+    const numEl = document.createElement('span');
+    numEl.className = 'preview-num';
+    numEl.textContent = String(item.number);
+    const labelEl = document.createElement('span');
+    labelEl.className = 'preview-label';
+    labelEl.textContent = humanLabel(item);
+    top.append(numEl, labelEl);
+    const sec = sectionForY(getY(item));
+    if (sec && sec.label) {
+      const secEl = document.createElement('span');
+      secEl.className = 'preview-section';
+      secEl.textContent = sec.label;
+      top.appendChild(secEl);
     }
 
-    row.addEventListener('mouseenter', () => { if (!item.lost) post({ type: 'prompt-hover', id: item.id }); });
-    row.addEventListener('mouseleave', () => { post({ type: 'prompt-hover', id: null }); });
+    const body = document.createElement('div');
+    body.className = 'preview-body';
+    body.textContent = item.request || (item.lost ? 'Not on this page any more' : '');
 
-    row.addEventListener('click', (e) => {
-      if (item.lost || e.target === reqTa || e.target === delBtn || delBtn.contains(e.target)) return;
-      state.activeItemId = item.id;
-      renderCollector();
-      post({ type: 'prompt-scroll', id: item.id });
+    const foot = document.createElement('div');
+    foot.className = 'preview-foot';
+    foot.textContent = 'Jump to it →';
+
+    preview.append(top, body, foot);
+    marker.appendChild(preview);
+
+    marker.addEventListener('mouseenter', () => {
+      setActiveMarker(item.id);
     });
-    els.collectorList.appendChild(row);
-  }
-
-  // Whole page row
-  const wholeRow = document.createElement('div');
-  wholeRow.className = 'collector-row whole';
-
-  const wholeHead = document.createElement('div');
-  wholeHead.className = 'row-head';
-
-  const wholeInfo = document.createElement('div');
-  wholeInfo.className = 'row-info';
-  const wholeTag = document.createElement('span');
-  wholeTag.className = 'row-tag';
-  wholeTag.textContent = 'WHOLE PAGE';
-  wholeInfo.appendChild(wholeTag);
-  wholeHead.appendChild(wholeInfo);
-
-  if (state.wholeRequest) {
-    const wholeDel = document.createElement('button');
-    wholeDel.className = 'row-del';
-    wholeDel.type = 'button';
-    wholeDel.title = 'Clear whole page request';
-    wholeDel.ariaLabel = 'Clear whole page request';
-    wholeDel.innerHTML = '<svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2.5 3.5h7M4.5 3.5V2a1 1 0 011-1h1a1 1 0 011 1v1.5M3.5 3.5v6.5a1 1 0 001 1h3a1 1 0 001-1v-6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
-    wholeDel.addEventListener('click', (e) => {
+    marker.addEventListener('mouseleave', () => {
+      if (state.activeItemId === item.id) setActiveMarker(null);
+    });
+    marker.addEventListener('click', (e) => {
       e.stopPropagation();
-      state.wholeRequest = '';
-      savePromptStore();
-      renderCollector();
-      renderPromptCount();
+      setActiveMarker(item.id);
+      if (!item.lost) post({ type: 'prompt-scroll', id: item.id });
     });
-    wholeHead.appendChild(wholeDel);
-  }
-  wholeRow.appendChild(wholeHead);
 
-  const wholeTa = document.createElement('textarea');
-  wholeTa.className = 'req-input';
-  wholeTa.placeholder = 'What should change across the whole page?';
-  wholeTa.value = state.wholeRequest || '';
-  wholeTa.addEventListener('input', () => { state.wholeRequest = wholeTa.value; renderPromptCount(); });
-  wholeTa.addEventListener('blur', () => { state.wholeRequest = wholeTa.value.trim(); savePromptStore(); });
-  wholeRow.appendChild(wholeTa);
-  els.collectorList.appendChild(wholeRow);
-  state.wholeTa = wholeTa;
+    els.dockMarkers.appendChild(marker);
+  });
 }
+
 function openWholePage() {
-  state.collectorCollapsed = false;
-  render();
-  if (state.wholeTa) { state.wholeTa.scrollIntoView({ block: 'nearest' }); state.wholeTa.focus(); }
+  state.wholeBubbleOpen = true;
+  updateDockFlip();
+  els.wholeBubble.hidden = false;
+  els.wholeBtn.classList.add('active');
+  els.wholeTa.value = state.wholeRequest || '';
+  setTimeout(() => els.wholeTa.focus(), 0);
 }
+function closeWholeBubble(discard) {
+  if (!state.wholeBubbleOpen && els.wholeBubble.hidden) return;
+  state.wholeBubbleOpen = false;
+  els.wholeBubble.hidden = true;
+  els.wholeBtn.classList.remove('active');
+  if (!discard) {
+    state.wholeRequest = els.wholeTa.value.trim();
+    savePromptStore();
+    renderPromptCount();
+    renderCollector();
+  }
+}
+function clearWholePage() {
+  state.wholeBubbleOpen = false;
+  els.wholeBubble.hidden = true;
+  els.wholeBtn.classList.remove('active');
+  state.wholeRequest = '';
+  els.wholeTa.value = '';
+  savePromptStore();
+  renderPromptCount();
+  renderCollector();
+}
+
+els.wholeBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (state.wholeBubbleOpen) closeWholeBubble(false);
+  else openWholePage();
+});
+els.wholeSave.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeWholeBubble(false);
+});
+els.wholeDel.addEventListener('click', (e) => {
+  e.stopPropagation();
+  clearWholePage();
+});
+els.wholeTa.addEventListener('keydown', (e) => {
+  e.stopPropagation();
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    closeWholeBubble(false);
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    closeWholeBubble(false);
+  }
+});
+document.addEventListener('mousedown', (e) => {
+  if (state.wholeBubbleOpen && !els.wholeBubble.contains(e.target) && !els.wholeBtn.contains(e.target)) {
+    closeWholeBubble(false);
+  }
+});
+window.addEventListener('resize', () => {
+  if (state.promptMode) renderCollector();
+});
+
+els.dockGrip.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const startRect = els.dock.getBoundingClientRect();
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const initLeft = startRect.left;
+  const initTop = startRect.top;
+  els.dock.classList.add('dragging');
+  els.frame.style.pointerEvents = 'none';
+
+  const onMove = (me) => {
+    const dx = me.clientX - startX;
+    const dy = me.clientY - startY;
+    applyDockPosition(initLeft + dx, initTop + dy);
+  };
+  const onUp = () => {
+    els.dock.classList.remove('dragging');
+    els.frame.style.pointerEvents = '';
+    window.removeEventListener('mousemove', onMove, true);
+    window.removeEventListener('mouseup', onUp, true);
+  };
+  window.addEventListener('mousemove', onMove, true);
+  window.addEventListener('mouseup', onUp, true);
+});
+els.dockGrip.addEventListener('dblclick', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  resetDockPosition();
+});
+els.dockGrip.addEventListener('keydown', (e) => {
+  const step = 16;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = els.dock.getBoundingClientRect();
+    const baseLeft = state.dockPos ? state.dockPos.left : rect.left;
+    const baseTop = state.dockPos ? state.dockPos.top : rect.top;
+    const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0;
+    const dy = e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0;
+    applyDockPosition(baseLeft + dx, baseTop + dy);
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    e.stopPropagation();
+    resetDockPosition();
+  }
+});
+
+els.dock.addEventListener('keydown', (e) => {
+  if (e.target === els.wholeTa || e.target === els.dockGrip) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    const ids = state.sortedMarkerIds;
+    if (!ids.length) return;
+    e.preventDefault();
+    const cur = ids.indexOf(state.activeItemId);
+    let nextIdx;
+    if (e.key === 'ArrowRight') {
+      nextIdx = cur === -1 ? 0 : (cur + 1) % ids.length;
+    } else {
+      nextIdx = cur === -1 ? ids.length - 1 : (cur - 1 + ids.length) % ids.length;
+    }
+    setActiveMarker(ids[nextIdx]);
+  } else if (e.key === 'Enter') {
+    if (state.activeItemId && (e.target === els.dock || e.target.closest('.dock-marker'))) {
+      e.preventDefault();
+      const item = state.promptItems.find((i) => i.id === state.activeItemId);
+      if (item && !item.lost) post({ type: 'prompt-scroll', id: item.id });
+    }
+  } else if (e.key === 'Escape') {
+    if (state.activeItemId) {
+      e.preventDefault();
+      setActiveMarker(null);
+    }
+  }
+});
 
 function hideStale() { els.collectorStale.hidden = true; }
 async function checkStale() {
@@ -429,6 +757,7 @@ els.staleReload.addEventListener('click', async () => {
   renderCollector();
   hideStale();
   if (state.promptMode) post({ type: 'prompt-restore', items: [] });
+  els.frame.src = src;
 });
 els.staleKeep.addEventListener('click', () => {
   hideStale();
@@ -436,8 +765,6 @@ els.staleKeep.addEventListener('click', () => {
 });
 window.addEventListener('focus', () => { if (state.promptMode) checkStale(); });
 
-els.collectorHandle.addEventListener('click', () => { state.collectorCollapsed = !state.collectorCollapsed; render(); });
-if (els.collectorClose) els.collectorClose.addEventListener('click', () => { state.collectorCollapsed = true; render(); });
 els.prompt.addEventListener('click', togglePrompt);
 els.promptDone.addEventListener('click', togglePrompt);
 els.toolPointer.addEventListener('click', () => {
@@ -452,25 +779,27 @@ els.toolBox.addEventListener('click', () => {
   render();
   post({ type: 'prompt-tool', tool: 'box' });
 });
+let copyTimer = null;
 els.copyPrompt.addEventListener('click', async () => {
   const text = RetouchPrompt.compile({ src, items: state.promptItems, whole: state.wholeRequest, source: state.lastKnownSource });
   try {
     await navigator.clipboard.writeText(text);
-    els.copyLabel.textContent = 'Copied! Paste it into ChatGPT, Claude, or your AI editor.';
-    setTimeout(() => { els.copyLabel.textContent = 'Copy instructions for AI'; }, 2000);
+    clearTimeout(copyTimer);
+    els.copyLabel.textContent = 'Copied ✓';
+    copyTimer = setTimeout(() => { els.copyLabel.textContent = 'Copy for AI'; }, 2000);
   } catch (e) {
     let wrap = document.getElementById('collector-copy-fallback');
     if (!wrap) {
       wrap = document.createElement('div');
       wrap.id = 'collector-copy-fallback';
-      const msg = document.createElement('div');
-      msg.className = 'collector-empty';
-      msg.textContent = 'Copy did not work here. Select the text below and copy it.';
+      wrap.className = 'whole-bubble';
+      wrap.style.right = '0';
+      wrap.style.left = 'auto';
       const ta = document.createElement('textarea');
       ta.className = 'collector-copy-text';
       ta.readOnly = true;
-      wrap.append(msg, ta);
-      els.collectorBody.prepend(wrap);
+      wrap.appendChild(ta);
+      els.dock.appendChild(wrap);
     }
     wrap.querySelector('textarea').value = text;
   }
@@ -506,6 +835,16 @@ async function save() {
     if (state.lastKnownSource !== null && current !== state.lastKnownSource) {
       throw new Error('The file changed on disk since you opened it. Reload the page to get the new version, then redo your edit.');
     }
+    const now = Date.now();
+    const changeCount = changes.length;
+    const summary = `${changeCount} change${changeCount === 1 ? '' : 's'}`;
+    try {
+      state.lastBackupId = await RetouchHistory.push(src, { savedAt: now, bytes: current, summary });
+      await updateHistoryButton();
+    } catch (e) {
+      state.lastBackupId = null;
+      logLine(`${new Date().toISOString()} [history] push backup failed: ${e.message}`);
+    }
     // Replaced images: write the new files next to the page first, settling names against the folder.
     const renames = {};
     for (const c of changes) {
@@ -532,15 +871,152 @@ async function save() {
     await writable.write(result.source);
     await writable.close();
     state.lastKnownSource = result.source;
-    for (const c of changes) if (c.pendingId) state.pendingImages.delete(c.pendingId);
+    state.pendingImages.clear();
     post({ type: 'commit', renames });
-    const t = new Date();
-    setStatus(`Saved at ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`, 'ok');
+    state.canUndo = false;
+    state.canRedo = false;
+    render();
+    const t = new Date(now);
+    const timeStr = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+    if (state.lastBackupId) {
+      setStatus(`Saved at ${timeStr}`, 'ok', {
+        actionLabel: 'Undo',
+        duration: 8000,
+        onAction: () => restoreVersion(state.lastBackupId)
+      });
+    } else {
+      setStatus(`Saved at ${timeStr}`, 'ok');
+    }
   } catch (e) {
     setStatus(e.message || String(e), 'error');
   } finally {
     state.saving = false;
     render();
+  }
+}
+
+function formatHistoryDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const time = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+  const isToday = d.toDateString() === now.toDateString();
+  if (isToday) return `Today ${time}`;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  if (isYesterday) return `Yesterday ${time}`;
+
+  const day = d.getDate();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[d.getMonth()];
+  return `${day} ${month} ${time}`;
+}
+
+async function updateHistoryButton() {
+  if (!els.historyBtn) return;
+  try {
+    const list = await RetouchHistory.list(src);
+    state.historyCount = list.length;
+    els.historyBtn.disabled = list.length === 0;
+  } catch (e) {
+    state.historyCount = 0;
+    els.historyBtn.disabled = true;
+  }
+}
+
+function closeHistory() {
+  if (els.historyPop) els.historyPop.hidden = true;
+}
+
+async function buildHistory() {
+  els.historyPop.textContent = '';
+  const list = await RetouchHistory.list(src);
+  if (!list.length) {
+    closeHistory();
+    return;
+  }
+  for (const item of list) {
+    const row = document.createElement('div');
+    row.className = 'history-row';
+    const label = document.createElement('span');
+    label.className = 'history-label';
+    label.textContent = `${formatHistoryDate(item.savedAt)} · ${item.summary || 'Saved'}`;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn small history-restore';
+    btn.textContent = 'Restore';
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      closeHistory();
+      await restoreVersion(item.id);
+    });
+    row.append(label, btn);
+    els.historyPop.appendChild(row);
+  }
+}
+
+async function toggleHistory() {
+  if (!els.historyPop.hidden) {
+    closeHistory();
+    return;
+  }
+  closeTheme();
+  els.historyPop.hidden = false;
+  await buildHistory();
+}
+
+async function restoreVersion(id) {
+  if (state.count + state.structural > 0 && !confirm('Restoring replaces the page and discards your unsaved changes. Continue?')) return;
+  try {
+    let found = await RetouchVault.resolve(src, state.lastKnownSource);
+    if (!found) found = await RetouchVault.resolve(src, null);
+    if (!found) {
+      setStatus(`To restore, Retouch needs access to this file's folder, ${dirPath}. Choose “${dirName}” or a folder above it; Retouch remembers it.`, 'need-folder');
+      return;
+    }
+    const current = await (await found.fileHandle.getFile()).text();
+    if (state.lastKnownSource !== null && current !== state.lastKnownSource) {
+      setStatus('The file changed after you saved, so Retouch won’t undo over it. Use History to pick a version.', 'error');
+      return;
+    }
+    const targetBytes = await RetouchHistory.get(src, id);
+    if (targetBytes === null || targetBytes === undefined) {
+      throw new Error('Version could not be found in history.');
+    }
+    const list = await RetouchHistory.list(src);
+    const meta = list.find((e) => e.id === id);
+    const targetDate = meta ? new Date(meta.savedAt) : new Date();
+    const timeStr = `${targetDate.getHours()}:${String(targetDate.getMinutes()).padStart(2, '0')}`;
+
+    try {
+      await RetouchHistory.push(src, {
+        savedAt: Date.now(),
+        bytes: current,
+        summary: 'Before restore'
+      });
+      await updateHistoryButton();
+    } catch (e) {
+      logLine(`${new Date().toISOString()} [history] push before restore failed: ${e.message}`);
+    }
+
+    const writable = await found.fileHandle.createWritable();
+    await writable.write(targetBytes);
+    await writable.close();
+    state.lastKnownSource = targetBytes;
+    state.lastBackupId = null;
+    state.pendingImages.clear();
+
+    state.count = 0;
+    state.structural = 0;
+    state.editing = true;
+    render();
+    els.frame.src = src;
+
+    setStatus(`Restored the version from ${timeStr}`, 'ok');
+  } catch (e) {
+    setStatus(e.message || String(e), 'error');
   }
 }
 
@@ -579,10 +1055,11 @@ function mediaTag(media) {
 }
 
 function themeRow(item) {
-  const row = document.createElement(item.source === 'inline' ? 'button' : 'div');
-  row.className = 'row' + (item.source === 'inline' ? '' : ' locked');
+  const isLocked = item.source !== 'inline' || !!item.overriddenBy;
+  const row = document.createElement(isLocked ? 'div' : 'button');
+  row.className = 'row' + (isLocked ? ' locked' : '');
   row.style.position = 'relative';
-  if (item.source === 'inline') row.type = 'button';
+  if (!isLocked) row.type = 'button';
   const swatch = document.createElement('span');
   swatch.className = 'swatch';
   swatch.style.background = item.value;
@@ -592,11 +1069,21 @@ function themeRow(item) {
   const tag = document.createElement('span');
   tag.className = 'tag';
   row.title = `${item.property}: ${item.value}`;
+  row.dataset.property = item.property;
   row.append(swatch, label, tag);
   if (item.source !== 'inline') {
     const file = (item.href || '').split('/').pop() || 'another file';
     tag.textContent = `lives in ${decodeURIComponent(file)}`;
     row.title = `${item.property}: ${item.value} — Retouch cannot edit a separate CSS file yet.`;
+    return row;
+  }
+  if (item.overriddenBy) {
+    const isDark = /dark/i.test(item.overriddenBy);
+    let shortSel = item.overriddenBy.trim();
+    if (shortSel.length > 18) shortSel = shortSel.slice(0, 17) + '…';
+    tag.textContent = isDark ? 'set by dark theme' : `set by ${shortSel}`;
+    const cause = isDark ? 'dark theme' : item.overriddenBy;
+    row.title = `The page’s ${cause} is setting this colour right now, so Retouch won’t change the base colour you can’t see. Switch the page back to its normal theme to edit it, or use Prompt mode to ask your AI to change the dark theme.`;
     return row;
   }
   tag.textContent = mediaTag(item.media);
@@ -655,6 +1142,17 @@ function buildTheme(items) {
     h.className = 'group';
     h.textContent = title;
     els.theme.appendChild(h);
+    if (source === 'inline' && rows.length > 0 && rows.every((i) => i.overriddenBy)) {
+      const p = document.createElement('p');
+      p.className = 'empty';
+      const isDark = rows.some((i) => /dark/i.test(i.overriddenBy));
+      const firstOverride = rows.find((i) => i.overriddenBy)?.overriddenBy || '';
+      let shortSel = firstOverride.trim();
+      if (shortSel.length > 18) shortSel = shortSel.slice(0, 17) + '…';
+      const cause = isDark ? 'dark theme' : shortSel;
+      p.textContent = `The page’s ${cause} is setting these colours right now, so Retouch won’t change the base colours you can’t see. Switch the page back to its normal theme to edit them, or use Prompt mode to ask your AI to change the dark theme.`;
+      els.theme.appendChild(p);
+    }
     for (const item of rows) els.theme.appendChild(themeRow(item));
   }
 }
@@ -673,10 +1171,28 @@ async function toggleTheme() {
 
 els.edit.addEventListener('click', toggleEdit);
 els.save.addEventListener('click', save);
-els.colors.addEventListener('click', (e) => { e.stopPropagation(); toggleTheme(); });
-document.addEventListener('click', (e) => { if (!els.theme.hidden && !els.theme.contains(e.target)) closeTheme(); });
-els.discard.addEventListener('click', () => { post({ type: 'reset' }); state.pendingImages.clear(); closeTheme(); setStatus('Changes discarded'); });
-els.dismiss.addEventListener('click', () => { els.banner.hidden = true; els.dropmat.hidden = true; });
+els.colors.addEventListener('click', (e) => { e.stopPropagation(); closeHistory(); toggleTheme(); });
+els.historyBtn.addEventListener('click', (e) => { e.stopPropagation(); closeTheme(); toggleHistory(); });
+document.addEventListener('click', (e) => {
+  if (!els.theme.hidden && !els.theme.contains(e.target)) closeTheme();
+  if (!els.historyPop.hidden && !els.historyPop.contains(e.target) && e.target !== els.historyBtn && !els.historyBtn.contains(e.target)) closeHistory();
+});
+els.undoBtn.addEventListener('click', () => post({ type: 'undo' }));
+els.redoBtn.addEventListener('click', () => post({ type: 'redo' }));
+els.discard.addEventListener('click', () => { post({ type: 'reset' }); state.pendingImages.clear(); closeTheme(); closeHistory(); state.canUndo = false; state.canRedo = false; setStatus('Changes discarded'); render(); });
+els.dismiss.addEventListener('click', () => {
+  els.banner.hidden = true;
+  els.dropmat.hidden = true;
+  if (els.status.classList.contains('error')) setStatus('');
+});
+els.status.addEventListener('click', (e) => {
+  if (e.target && e.target.classList.contains('status-action')) return;
+  if (els.status.classList.contains('error')) {
+    setStatus('');
+    els.banner.hidden = true;
+    els.dropmat.hidden = true;
+  }
+});
 els.exit.addEventListener('click', () => {
   if (state.count + state.structural > 0 && !confirm('Discard your unsaved changes and leave?')) return;
   location.href = src;
@@ -773,6 +1289,14 @@ document.addEventListener('drop', async (e) => {
     setStatus(err.message || String(err), 'error');
   }
 });
+// Feedback from the one moment it matters most: a failed save. A mailto the user reviews and sends
+// themselves, with the error and version only (no page contents, no file path), so nothing leaves
+// the machine unless they choose to send it.
+els.report.addEventListener('click', () => {
+  const version = (chrome.runtime && chrome.runtime.getManifest) ? chrome.runtime.getManifest().version : '';
+  const body = `What I was doing:\n\n\nWhat Retouch said:\n${els.bannerText.textContent}\n\nRetouch ${version} · ${navigator.userAgent}`;
+  window.open(`mailto:hello@fastretouch.com?subject=${encodeURIComponent('Retouch ' + version + ': save problem')}&body=${encodeURIComponent(body)}`);
+});
 els.details.addEventListener('click', async () => {
   const text = await diagnostics();
   try { await navigator.clipboard.writeText(text); els.details.textContent = 'Copied'; }
@@ -780,8 +1304,26 @@ els.details.addEventListener('click', async () => {
   setTimeout(() => { els.details.textContent = 'Copy Details'; }, 1500);
 });
 document.addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
-  if (e.key === 'Escape' && !els.theme.hidden) closeTheme();
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); save(); return; }
+  if (state.editing && mod && !e.altKey) {
+    const k = e.key.toLowerCase();
+    if (!e.shiftKey && k === 'z') {
+      e.preventDefault();
+      post({ type: 'undo' });
+      return;
+    }
+    if ((e.shiftKey && k === 'z') || (!e.shiftKey && k === 'y')) {
+      e.preventDefault();
+      post({ type: 'redo' });
+      return;
+    }
+  }
+  if (e.key === 'Escape') {
+    if (!els.theme.hidden) closeTheme();
+    if (state.activeItemId) setActiveMarker(null);
+    if (state.wholeBubbleOpen) closeWholeBubble(false);
+  }
 });
 window.addEventListener('beforeunload', (e) => {
   if (state.count + state.structural > 0) { e.preventDefault(); e.returnValue = ''; }
@@ -855,5 +1397,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
     }
   });
 }
-window.retouchDebug = { collect, state, diagnostics, requestTheme };
+window.RetouchVault = RetouchVault;
+window.RetouchHistory = RetouchHistory;
+window.retouchDebug = { collect, state, diagnostics, requestTheme, setStatus, updateHistoryButton };
 render();
