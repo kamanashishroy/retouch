@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light">
 <title>Privacy · Retouch</title>
 <meta name="description" content="What Retouch stores, reads and writes, and what it never does. Nothing leaves your machine.">
-<meta name="theme-color" content="#0b0b0d">
+<meta name="theme-color" content="#f3efe6">
 <meta property="og:title" content="Retouch privacy policy">
 <meta property="og:description" content="Retouch reads and writes files on your own disk and nothing else. No server, no account, no analytics.">
 <meta property="og:url" content="https://fastretouch.com/privacy.html">
@@ -18,43 +18,30 @@
 <link rel="canonical" href="https://fastretouch.com/privacy.html">
 <link rel="icon" href="icons/32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/128.png">
-<link rel="stylesheet" href="welcome.css">
-<style>
-  .page { position: relative; z-index: 1; width: min(800px, 100% - 56px); margin: 0 auto; padding: 150px 0 120px; }
-  .page section { margin: 0 0 72px; }
-  .privacy-hero .giant { font-size: clamp(52px, 9.2vw, 136px); line-height: .95; }
-  .body h2 { font-size: 28px; letter-spacing: -.02em; margin: 0 0 14px; }
-  .body p, .body li { color: var(--secondary); font-size: 18px; line-height: 1.6; margin: 0 0 14px; }
-  .body p b, .body li b { color: var(--fg); }
-  .body ul { padding-left: 22px; margin: 0 0 14px; }
-  .body li { margin: 0 0 10px; }
-  .body code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 15px; background: var(--glass); border: 1px solid var(--border); padding: 1px 8px; border-radius: 999px; color: var(--fg); }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 22px 0 0; }
-  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
-  .grid div { padding: 18px 22px; border-radius: 18px; background: var(--glass); border: 1px solid var(--border); }
-  .grid b { display: block; color: var(--fg); font-size: 17px; margin-bottom: 4px; }
-  .grid span { color: var(--secondary); font-size: 15px; line-height: 1.5; }
-  .grid .no b::before { content: "✕ "; color: var(--pink); }
-  .grid .yes b::before { content: "✓ "; color: var(--yellow); }
-  .meta { color: var(--secondary); font-size: 14px; margin: 0 0 10px; }
-  .foot { color: var(--secondary); font-size: 14px; margin-top: 40px; }
-  .foot a { color: var(--secondary); } .foot a:hover { color: var(--fg); }
-  .body p:not(.foot) a, .who p a { color: var(--fg); }
-</style>
+<link rel="stylesheet" href="homepage.css">
+<link rel="stylesheet" href="page.css">
 </head>
 <body>
-<header class="top">
-  <a class="brand" href="/"><img src="icons/icon.svg" alt=""><span class="lockup"><span class="fast">fast</span><span class="re">retouch</span></span></a>
-  <nav class="topnav">
-    <a href="/#setup">Set up</a>
-    <a href="/about.html">About</a>
-    <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
-    <a class="pill primary small" href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Install</a>
-  </nav>
-</header>
+<a href="#main" class="skip-link">Skip to main content</a>
+  <header class="site-header on-page">
+    <div class="header-wrap">
+      <a class="brand" href="/" aria-label="fastretouch home">
+        <img src="brand/mark.svg" alt="" class="mark" width="28" height="29">
+        <span class="lockup"><span class="fast">fast</span><span class="retouch">retouch</span></span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="/#how">How it works</a>
+        <a href="/#privacy">Privacy</a>
+        <a href="/#open-source">Open source</a>
+        <a href="/#faq">FAQ</a>
+        <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+        <a class="btn-nav" href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add to Chrome</a>
+      </nav>
+    </div>
+  </header>
 
-<main class="page">
-  <section class="privacy-hero">
+<main class="page wrap" id="main">
+  <section class="page-hero privacy-hero">
     <p class="eyebrow">Privacy policy</p>
     <h1 class="giant"><span class="word">Nothing leaves</span><br><span class="word thin">your machine.</span></h1>
     <p class="lede">Retouch is a Chrome extension that edits the text of HTML files on your own disk and saves them in place. This page says exactly what it stores, what it reads and writes, and what it never does. It is short because there is little to tell.</p>
@@ -70,7 +57,21 @@
     </div>
   </section>
 
-  <section class="body">
+  <div class="divider-wire page-wire" data-divider="normal" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(680, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="policy">
+  <div class="policy-text">
+  <section class="body" id="stores">
     <h2>What Retouch stores on your device</h2>
     <p>Retouch keeps three kinds of record in the browser's storage for the extension (IndexedDB), on your computer only:</p>
     <ul>
@@ -82,7 +83,7 @@
     <p>While you are editing, the file's text and the page's stylesheets are held in memory so Retouch can patch the source exactly and list the styles the page already uses. That memory is released when you leave the page.</p>
   </section>
 
-  <section class="body">
+  <section class="body" id="reads-writes">
     <h2>What Retouch reads and writes</h2>
     <ul>
       <li><b>The file you open.</b> When you click the Retouch icon on a <code>file://</code> page, Retouch reads that HTML file so it can show it in the editor and patch its source when you save.</li>
@@ -94,7 +95,7 @@
     </ul>
   </section>
 
-  <section class="body">
+  <section class="body" id="permissions">
     <h2>Permissions, and why</h2>
     <ul>
       <li><b>Access to file URLs</b> (<code>file:///*</code>). Retouch edits local files, so it needs to run on pages loaded from your disk. This is the only host permission. It has no access to <code>http</code> or <code>https</code> websites at all, and Chrome keeps even this switched off until you turn on "Allow access to file URLs" in the extension's details.</li>
@@ -104,7 +105,7 @@
     <p>Retouch asks for nothing else: no tabs, no browsing history, no cookies, no access to websites.</p>
   </section>
 
-  <section class="body">
+  <section class="body" id="never">
     <h2>What Retouch never does</h2>
     <ul>
       <li>Send any data anywhere. There is no server to send it to and no code that talks to one.</li>
@@ -116,13 +117,45 @@
     <p>The only network activity connected to Retouch is Chrome's own: the Chrome Web Store keeps the extension updated, under Google's privacy policy, and the links on the tour open fastretouch.com or GitHub in a normal tab when you click them.</p>
   </section>
 
-  <section class="body">
+  <section class="body" id="contact">
     <h2>Children, changes and contact</h2>
     <p>Retouch is a general-purpose tool and is not directed at children. It collects no personal information from anyone.</p>
     <p>If a future version handles data differently, for instance an optional update check, this page will say so with a new effective date before that version ships, the change will be described in the release notes, and the extension will tell you inside its own interface before the new behaviour is switched on.</p>
     <p>Retouch is made by Kamanashish Roy and is open source under the MIT licence. Questions about this policy go to <a href="https://x.com/doubts" target="_blank" rel="noopener">@doubts on X</a>, <a href="mailto:hello@fastretouch.com">hello@fastretouch.com</a> or the <a href="https://github.com/kamanashishroy/retouch/issues" target="_blank" rel="noopener">issue tracker</a>. If you would rather check than trust, <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">read the code</a>.</p>
-    <p class="foot"><a href="/">fastretouch.com</a> · <a href="/about.html">About</a> · <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">GitHub</a></p>
   </section>
+  </div>
+  <aside class="toc" aria-label="On this page">
+    <div class="toc-box">
+      <p class="eyebrow">On this page</p>
+      <ol>
+        <li><a href="#stores">What Retouch stores on your device</a></li>
+        <li><a href="#reads-writes">What Retouch reads and writes</a></li>
+        <li><a href="#permissions">Permissions, and why</a></li>
+        <li><a href="#never">What Retouch never does</a></li>
+        <li><a href="#contact">Children, changes and contact</a></li>
+      </ol>
+    </div>
+  </aside>
+  </div>
 </main>
+
+<footer class="site-footer">
+  <div class="footer-wrap wrap">
+    <div class="footer-brand">
+      <img src="brand/mark.svg" alt="" class="mark" width="24" height="25">
+      <span class="lockup"><span class="fast">fast</span><span class="retouch">retouch</span></span>
+      <span class="footer-bird-slot"></span>
+    </div>
+    <nav class="footer-nav" aria-label="Footer navigation">
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+      <a href="https://github.com/kamanashishroy/retouch/blob/main/LICENSE" target="_blank" rel="noopener">MIT licence</a>
+      <a href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener">Chrome Web Store</a>
+    </nav>
+    <p class="footer-credit">Made by <a href="about.html">Kamanashish Roy</a></p>
+  </div>
+</footer>
+<script src="page-birds.js" defer></script>
 </body>
 </html>

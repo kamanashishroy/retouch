@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Retouch · Fast AI HTML Editor</title>
+<script src="editor/early.js"></script>
+<style>
+:root {
+  --ink: #1f2933;
+  --purple: #9a5ca3;
+  --gold: #c8902a;
+  --muted: #52606d;
+}
+.ink { color: #1f2933; }
+.purple { color: #9a5ca3; }
+.gold { color: #c8902a; }
+.muted { color: #52606d; }
+.electric-green { color: #39ff14; }
+</style>
+<link rel="stylesheet" href="draft.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="draft-header">
+    <a href="#" class="brand">
+      <img class="logo" src="draft/logo-wrong.svg" alt="Retouch">
+    </a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#">Privacy</a>
+      <a href="#" class="pill primary">Install</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Fix the HTML your AI wrote wrote.</h1>
+      <p class="sub">Retouch is the revolutionary, game-changing Chrome extension that empowers you to seamlessly edit any HTML page your AI generates ✨</p>
+      <div class="hero-image-wrap">
+        <img class="hero-image" src="draft/hero.svg" alt="Hills at sunset, a wire with three birds, and a tree full of sleeping birds" width="1200" height="480">
+      </div>
+    </section>
+
+    <div class="stat-strip">
+      <div class="stat-wrap">
+        <p class="stat-text">Saves in 3 minutes</p>
+        <div class="stat-timer" data-retouch-ui aria-hidden="true">
+          <span class="timer-digits">0.0</span>s
+        </div>
+      </div>
+    </div>
+
+    <section class="how-it-works">
+      <h2>How it works</h2>
+      <p>Click any text, change it, and save it straight back to the file. Everything you didn't touch stays byte for byte the same.</p>
+      <p>Nothing leaves your <span class="green-word" style="color: #39ff14;">machine</span>.</p>
+    </section>
+
+    <section class="features" id="features">
+      <h2>Features</h2>
+      <div class="features-list">
+        <div class="feature-card">
+          <h3>Click to edit</h3>
+          <p>Change any headline, sentence, or number in place.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Format with the page's own styles</h3>
+          <p>Pick fonts, colors, and classes harvested from the stylesheet.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Notes for your AI</h3>
+          <p>Pin notes to elements and copy one clean prompt.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="draft-footer">
+    <p class="license-line">Free and [LICENSE_TYPE] · Made for Chrome</p>
+    <button class="pill primary" type="button">Install</button>
+  </footer>
+
+</div>
+
+<script src="editor/describe.js"></script>
+<script src="editor/content.js"></script>
+<script src="vendor/gsap.min.js"></script>
+<script src="draft/bird.js"></script>
+<script src="draft.js"></script>
+</body>
+</html>

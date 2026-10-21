@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light">
 <title>About · Retouch</title>
 <meta name="description" content="Retouch is made by Kamanashish Roy. Why it exists, what it refuses to do, and where to find him.">
-<meta name="theme-color" content="#0b0b0d">
+<meta name="theme-color" content="#f3efe6">
 <meta property="og:title" content="About Retouch">
 <meta property="og:description" content="A pencil for the HTML your AI wrote. Made by Kamanashish Roy.">
 <meta property="og:url" content="https://fastretouch.com/about.html">
@@ -25,56 +25,51 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Person","name":"Kamanashish Roy","alternateName":"Roy","url":"https://doubts.page","jobTitle":"Founder","worksFor":{"@type":"Organization","name":"Wozku","url":"https://wozku.com"},"image":"https://fastretouch.com/roy.jpg","email":"mailto:hello@fastretouch.com","sameAs":["https://www.linkedin.com/in/doubts/","https://x.com/doubts","https://advocacyled.com","https://doubts.page","https://wozku.com"]}
 </script>
-<link rel="stylesheet" href="welcome.css">
-<style>
-  .page { position: relative; z-index: 1; width: min(880px, 100% - 56px); margin: 0 auto; padding: 150px 0 120px; }
-  .page section { margin: 0 0 96px; }
-  .page section > * { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--ease), transform .8s var(--ease); }
-  .page section.in > * { opacity: 1; transform: none; }
-  .page section.in > *:nth-child(2) { transition-delay: .08s; } .page section.in > *:nth-child(3) { transition-delay: .16s; } .page section.in > *:nth-child(4) { transition-delay: .24s; }
-  .about-hero .giant { font-size: clamp(52px, 9.2vw, 136px); line-height: .95; }
-  .who { display: grid; grid-template-columns: 180px 1fr; gap: 40px; align-items: start; }
-  @media (max-width: 720px) { .who { grid-template-columns: 1fr; } }
-  .portrait { width: 180px; height: 180px; border-radius: 40px; object-fit: cover; display: block; box-shadow: 0 24px 60px rgba(0,0,0,.4), 0 0 0 1px var(--border); }
-  .who h2 { margin: 0 0 8px; font-size: 34px; letter-spacing: -.02em; }
-  .who .role { margin: 0 0 18px; color: var(--pink); font-weight: 600; }
-  .who p { color: var(--secondary); font-size: 18px; margin: 0 0 14px; }
-  .who p b { color: var(--fg); }
-  .q { font-size: clamp(26px, 3.4vw, 40px); line-height: 1.2; font-weight: 300; letter-spacing: -.01em; margin: 0 0 22px; color: var(--fg); }
-  .q em { font-style: italic; color: var(--yellow); }
-  .body p { color: var(--secondary); font-size: 18px; line-height: 1.6; max-width: 680px; margin: 0 0 16px; }
-  .body p b { color: var(--fg); }
-  .rules { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
-  .rules li { padding: 18px 22px; border-radius: 18px; background: var(--glass); border: 1px solid var(--border); color: var(--secondary); font-size: 17px; display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; }
-  .rules li b { color: var(--fg); display: block; margin-bottom: 2px; }
-  .rules .n { width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #0b0b0d; font-weight: 800; font-size: 13px; display: grid; place-items: center; margin-top: 2px; }
-  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-  .links a { text-decoration: none; }
-  .foot { color: var(--secondary); font-size: 14px; margin-top: 40px; }
-  .foot a { color: var(--secondary); } .foot a:hover { color: var(--fg); }
-  .body p:not(.foot) a, .who p a { color: var(--fg); }
-  .editnote { margin-top: 18px; padding: 14px 18px; border-radius: 14px; border: 1px dashed var(--border); color: var(--secondary); font-size: 14px; }
-</style>
+<link rel="stylesheet" href="homepage.css">
+<link rel="stylesheet" href="page.css">
 </head>
 <body>
-<header class="top">
-  <a class="brand" href="/"><img src="icons/icon.svg" alt=""><span class="lockup"><span class="fast">fast</span><span class="re">retouch</span></span></a>
-  <nav class="topnav">
-    <a href="/#setup">Set up</a>
-    <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
-    <a class="pill primary small" href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Install</a>
-  </nav>
-</header>
+<a href="#main" class="skip-link">Skip to main content</a>
+  <header class="site-header on-page">
+    <div class="header-wrap">
+      <a class="brand" href="/" aria-label="fastretouch home">
+        <img src="brand/mark.svg" alt="" class="mark" width="28" height="29">
+        <span class="lockup"><span class="fast">fast</span><span class="retouch">retouch</span></span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="/#how">How it works</a>
+        <a href="/#privacy">Privacy</a>
+        <a href="/#open-source">Open source</a>
+        <a href="/#faq">FAQ</a>
+        <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+        <a class="btn-nav" href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add to Chrome</a>
+      </nav>
+    </div>
+  </header>
 
-<main class="page">
-  <section class="about-hero in">
+<main class="page wrap" id="main">
+  <section class="page-hero about-hero">
     <p class="eyebrow">About</p>
     <h1 class="giant"><span class="word">Made by</span><br><span class="word thin">someone who reads.</span></h1>
     <p class="lede">Retouch exists because a marketer kept getting beautiful pages from an AI and could not fix a single word in them without asking the AI again, or opening VS Code.</p>
   </section>
 
+  <div class="divider-wire page-wire" data-divider="normal" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(680, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
   <section class="who">
-    <img class="portrait" src="roy.jpg" alt="Kamanashish Roy" width="180" height="180">
+    <figure class="portrait-wrap">
+      <img class="portrait" src="roy.jpg" alt="Kamanashish Roy" width="320" height="320">
+    </figure>
     <div>
       <h2>Kamanashish Roy</h2>
       <p class="role">Founder of Wozku · creator of Advocacy-Led Growth · @doubts</p>
@@ -100,7 +95,7 @@
     <p>It was built quickly, with an AI in the loop, on the pages it was meant to fix. That seemed like the only honest way to make it.</p>
   </section>
 
-  <section class="body">
+  <section class="body rules-section">
     <p class="eyebrow">What it refuses to do</p>
     <p class="q">A tool that writes to your files earns trust by what it <em>won't</em> touch.</p>
     <ul class="rules">
@@ -116,12 +111,26 @@
     <p class="eyebrow">Say hello</p>
     <p class="q">Found a page it can't fix? <em>Send it.</em></p>
     <p>For support, a feature request or a page Retouch could not fix, message or tag <a href="https://x.com/doubts" target="_blank" rel="noopener">@doubts on X</a>. Longer things go to <a href="mailto:hello@fastretouch.com">hello@fastretouch.com</a> or the <a href="https://github.com/kamanashishroy/retouch/issues" target="_blank" rel="noopener">issue tracker</a>. The stranger who tried it first jumped. That's the bar.</p>
-    <p class="foot"><a href="/">fastretouch.com</a> · <a href="/privacy.html">Privacy</a> · <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">GitHub</a> · <a href="https://wozku.com" target="_blank" rel="noopener">wozku.com</a> · <a href="https://advocacyled.com" target="_blank" rel="noopener">advocacyled.com</a> · <a href="https://doubts.page" target="_blank" rel="noopener">doubts.page</a></p>
   </section>
 </main>
-<script>
-  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) e.target.classList.add('in'); }, { threshold: .2 });
-  document.querySelectorAll('.page section').forEach((s) => io.observe(s));
-</script>
+
+<footer class="site-footer">
+  <div class="footer-wrap wrap">
+    <div class="footer-brand">
+      <img src="brand/mark.svg" alt="" class="mark" width="24" height="25">
+      <span class="lockup"><span class="fast">fast</span><span class="retouch">retouch</span></span>
+      <span class="footer-bird-slot"></span>
+    </div>
+    <nav class="footer-nav" aria-label="Footer navigation">
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+      <a href="https://github.com/kamanashishroy/retouch/blob/main/LICENSE" target="_blank" rel="noopener">MIT licence</a>
+      <a href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener">Chrome Web Store</a>
+    </nav>
+    <p class="footer-credit">Made by <a href="about.html">Kamanashish Roy</a></p>
+  </div>
+</footer>
+<script src="page-birds.js" defer></script>
 </body>
 </html>

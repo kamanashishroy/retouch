@@ -1,129 +1,222 @@
-// The public homepage at fastretouch.com: slide navigation and the marketing pitch.
-// IS_EXT is always false here (this file never ships inside the extension); the branches below are
-// a leftover safety net from when this page also ran as the extension's own tour.
-const IS_EXT = typeof chrome !== 'undefined' && !!(chrome.runtime && chrome.runtime.id);
-const EXT_ID = IS_EXT ? chrome.runtime.id : null;
-const REPO_URL = 'https://github.com/kamanashishroy/retouch';
-const STORE_URL = 'https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh';
-if (!IS_EXT) document.body.classList.add('web');
-for (const a of document.querySelectorAll('.repo-link')) a.href = REPO_URL;
-for (const a of document.querySelectorAll('.releases-link')) a.href = REPO_URL + '/releases/latest';
-for (const a of document.querySelectorAll('.store-link')) a.href = STORE_URL;
-const slides = [...document.querySelectorAll('.slide')];
-const deck = document.querySelector('.deck');
-const dots = document.querySelector('.dots');
+(function () {
+  'use strict';
 
-slides.forEach((s, i) => {
-  const a = document.createElement('a');
-  a.href = '#' + s.id;
-  a.dataset.title = s.dataset.title;
-  a.setAttribute('aria-label', s.dataset.title);
-  dots.appendChild(a);
-});
-const io = new IntersectionObserver((entries) => {
-  for (const e of entries) {
-    // A slide counts as current when most of it is on screen, or when it fills most of the screen
-    // (a slide taller than two viewports, like the compare table on a phone, never reaches half of itself).
-    if (e.intersectionRatio > .5 || (e.rootBounds && e.intersectionRect.height > e.rootBounds.height * .5)) {
-      e.target.classList.add('in');
-      const i = slides.indexOf(e.target);
-      [...dots.children].forEach((d, j) => d.classList.toggle('on', i === j));
-      history.replaceState(null, '', '#' + e.target.id);
+  const DOCK_TOP = 76;
+  const HOLD = 0.3;
+  let restY = 400;
+  let wireLow = 240;
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function getKeepOut() {
+    const copy = document.getElementById('copy');
+    const h1 = copy ? copy.querySelector('h1') : null;
+    const lede = copy ? copy.querySelector('.lede') : null;
+    const W = window.innerWidth;
+    if (!copy || !h1) return [{ left: 0, right: W, top: -999, bottom: 82 }];
+
+    const h1R = h1.getBoundingClientRect();
+    const ledeR = lede ? lede.getBoundingClientRect() : { left: 0, right: 0, top: 0, bottom: 0 };
+    return [
+      { left: 0, right: W, top: -999, bottom: 82 },
+      { left: h1R.left - 14, right: h1R.right + 14, top: h1R.top - 14, bottom: h1R.bottom + 14 },
+      { left: ledeR.left - 10, right: ledeR.right + 10, top: ledeR.top - 10, bottom: ledeR.bottom + 10 }
+    ];
+  }
+
+  function measure() {
+    const H = window.innerHeight;
+    const hero = document.getElementById('hero');
+    const copy = document.getElementById('copy');
+    const h1 = copy ? copy.querySelector('h1') : null;
+    if (!hero || !copy || !h1) return;
+
+    document.documentElement.style.setProperty('--copy-top', `${Math.round(clamp(H * 0.3, 190, 300))}px`);
+    const top = h1.offsetTop + copy.offsetTop;
+    const bottom = copy.offsetTop + copy.offsetHeight;
+    wireLow = top - 34;
+    restY = Math.max(bottom + 44, H * 0.5) - DOCK_TOP;
+
+    if (window.innerWidth >= 1100) {
+      hero.style.height = `${Math.round(H + restY + H * HOLD)}px`;
+    } else {
+      hero.style.height = '';
+    }
+
+    const dockSnap = document.getElementById('dock-snap');
+    if (dockSnap) {
+      dockSnap.style.top = `${Math.round(restY)}px`;
     }
   }
-}, { root: deck, threshold: Array.from({ length: 21 }, (_, i) => i / 20) });
-slides.forEach((s) => io.observe(s));
 
-function go(delta) {
-  const cur = slides.findIndex((s) => s.classList.contains('in') && [...dots.children][slides.indexOf(s)].classList.contains('on'));
-  const next = Math.max(0, Math.min(slides.length - 1, (cur === -1 ? 0 : cur) + delta));
-  slides[next].scrollIntoView({ behavior: 'smooth' });
-}
-document.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT') return;
-  if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(1); }
-  if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
-});
-
-// Setup state
-const accessState = document.getElementById('access-state');
-function checkAccess() {
-  if (!IS_EXT) return;
-  chrome.extension.isAllowedFileSchemeAccess((ok) => {
-    accessState.textContent = ok ? 'On. Retouch can see your files.' : 'Off. Switch it on, then restart Chrome.';
-    accessState.className = 'state ' + (ok ? 'ok' : 'warn');
-    document.getElementById('step-access').classList.toggle('done', ok);
-    document.getElementById('step-restart').classList.toggle('done', ok);
-  });
-}
-checkAccess();
-document.addEventListener('visibilitychange', () => { if (!document.hidden) checkAccess(); });
-document.getElementById('open-details').addEventListener('click', () => {
-  if (IS_EXT) chrome.tabs.create({ url: `chrome://extensions/?id=${EXT_ID}` });
-});
-
-// Practice page: written into Downloads/Retouch through the downloads API (permission asked on click),
-// then opened in the editor. The download gives us the absolute path, which a folder handle never would.
-const practiceState = document.getElementById('practice-state');
-async function makePractice() {
-  if (!IS_EXT) { window.open(STORE_URL, '_blank'); return; }
-  practiceState.textContent = '';
-  practiceState.className = 'state';
-  const allowed = await new Promise((r) => chrome.extension.isAllowedFileSchemeAccess(r));
-  if (!allowed) {
-    practiceState.textContent = 'Do steps 1 and 2 first: Retouch cannot open local files yet.';
-    practiceState.className = 'state warn';
-    document.getElementById('setup').scrollIntoView({ behavior: 'smooth' });
-    return;
+  function sendHeroData(iframe) {
+    if (!iframe || !iframe.contentWindow) return;
+    const lift = Math.max(0, restY - window.scrollY);
+    iframe.contentWindow.postMessage({
+      retouchWorld: 1,
+      type: 'hero',
+      restY,
+      wireLow,
+      lift,
+      keepOut: getKeepOut()
+    }, location.origin);
   }
-  const granted = await chrome.permissions.request({ permissions: ['downloads'] });
-  if (!granted) {
-    practiceState.textContent = 'Without that permission Retouch cannot place the file. You can still open any HTML file of your own.';
-    practiceState.className = 'state warn';
-    return;
+
+  function initTryFrame() {
+    if (window.innerWidth < 1100) return;
+    const stage = document.getElementById('stage') || document.getElementById('try-stage');
+    if (!stage) return;
+
+    let iframe = stage.querySelector('iframe');
+    if (iframe) return;
+
+    measure();
+
+    iframe = document.createElement('iframe');
+    iframe.src = `shell.html?rest=${Math.round(restY)}&low=${Math.round(wireLow)}`;
+    iframe.title = 'Try Retouch on a page an AI wrote';
+
+    const still = stage.querySelector('.try-still');
+    if (still) still.remove();
+
+    stage.appendChild(iframe);
   }
-  try {
-    // Download the bundled file by its own URL rather than a blob: if Chrome or another extension
-    // drops our filename suggestion, the fallback name is still "practice.html", not a random id.
-    const url = chrome.runtime.getURL('practice.html');
-    const wanted = { filename: 'Retouch/retouch-practice.html', conflictAction: 'uniquify' };
-    // Belt and braces: restate the name when Chrome asks listeners where the file should go.
-    const ours = new Set([url]);
-    const onName = (item, suggest) => { if (ours.has(item.url)) suggest(wanted); };
-    chrome.downloads.onDeterminingFilename.addListener(onName);
-    let id;
-    try {
-      id = await chrome.downloads.download(Object.assign({ url, saveAs: false }, wanted));
-    } catch (e) {
-      // Some Chrome builds refuse to download an extension's own URL; fall back to a blob copy.
-      const html = await (await fetch(url)).text();
-      const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-      ours.add(blobUrl);
-      id = await chrome.downloads.download(Object.assign({ url: blobUrl, saveAs: false }, wanted));
-    }
-    const item = await new Promise((resolve, reject) => {
-      const started = Date.now();
-      const poll = async () => {
-        const [d] = await chrome.downloads.search({ id });
-        if (d && d.state === 'complete' && d.filename) return resolve(d);
-        if (d && d.state === 'interrupted') return reject(new Error('The download was interrupted.'));
-        if (Date.now() - started > 15000) return reject(new Error('Chrome did not finish writing the file.'));
-        setTimeout(poll, 150);
-      };
-      poll();
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.body.appendChild(s);
     });
-    chrome.downloads.onDeterminingFilename.removeListener(onName);
-    const fileUrl = 'file://' + item.filename.split('/').map(encodeURIComponent).join('/').replace(/^\/?/, '/');
-    const inDownloads = /\/Downloads\/Retouch\//.test(item.filename);
-    practiceState.textContent = inDownloads
-      ? `Saved to ${item.filename.replace(/^.*\/Downloads\//, 'Downloads/')}. Opening…`
-      : `Chrome asked where to save, so the practice page is at ${item.filename}. Opening… (To skip that dialog next time, turn off “Ask where to save each file” in Chrome's download settings.)`;
-    practiceState.className = 'state ok';
-    document.getElementById('step-practice').classList.add('done');
-    await chrome.tabs.create({ url: `${chrome.runtime.getURL('viewer.html')}?src=${encodeURIComponent(fileUrl)}&fresh=1` });
-  } catch (e) {
-    practiceState.textContent = (e && e.message) || String(e);
-    practiceState.className = 'state warn';
   }
-}
-for (const id of ['make-practice', 'cta-top', 'cta-hero', 'cta-bottom']) document.getElementById(id).addEventListener('click', makePractice);
+
+  async function initPageWorld() {
+    if (window.innerWidth < 1100) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.__pageWorldLoaded) return;
+    window.__pageWorldLoaded = true;
+
+    try {
+      if (!window.gsap) await loadScript('vendor/gsap.min.js');
+      if (!window.DraftBird) await loadScript('draft/bird.js');
+      if (!window.DraftTree) await loadScript('draft/tree.js');
+      if (!window.DraftWires) await loadScript('draft/wires.js');
+      await loadScript('world/page-world.js');
+      await loadScript('page-birds.js');
+    } catch (err) {
+      console.warn('Could not load page-world:', err);
+    }
+  }
+
+  let scrollTicking = false;
+  function onScroll() {
+    if (!scrollTicking) {
+      scrollTicking = true;
+      requestAnimationFrame(() => {
+        scrollTicking = false;
+        const lift = Math.max(0, restY - window.scrollY);
+        const copy = document.getElementById('copy');
+        if (copy && window.innerWidth >= 1100) {
+          copy.style.opacity = clamp(1 - window.scrollY / (restY * 0.3), 0, 1);
+        }
+
+        const iframe = document.querySelector('.stage iframe, #stage iframe');
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({
+            retouchWorld: 1,
+            type: 'lift',
+            lift
+          }, location.origin);
+        }
+      });
+    }
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.origin !== location.origin) return;
+    if (e.data && e.data.retouchWorld && e.data.type === 'dock') {
+      window.scrollTo({ top: restY, behavior: 'smooth' });
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    measure();
+    const tryBtn = document.getElementById('try');
+    if (tryBtn) {
+      tryBtn.addEventListener('click', () => {
+        window.scrollTo({ top: restY, behavior: 'smooth' });
+      });
+    }
+  });
+
+  window.addEventListener('load', () => {
+    measure();
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(() => {
+        initTryFrame();
+        initPageWorld();
+      }, { timeout: 2000 });
+    } else {
+      setTimeout(() => {
+        initTryFrame();
+        initPageWorld();
+      }, 100);
+    }
+  });
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // A gentle dock instead of CSS scroll snapping (a snap point pulled small trackpad scrolls back to the dock, so
+  // the page felt stuck): when scrolling down stops just short of the dock, finish the last stretch. Never pulls
+  // back up, and never acts below the dock.
+  // It waits until the visitor's hands are off: no wheel, touch or key input for 400 ms (a trackpad's momentum
+  // keeps sending wheel events), so it never animates against a gesture.
+  let lastY = window.scrollY, goingDown = false, settleTimer = 0, lastInput = 0;
+  const handsOn = () => { lastInput = performance.now(); };
+  ['wheel', 'touchmove', 'keydown'].forEach((t) => window.addEventListener(t, handsOn, { passive: true, capture: true }));
+  window.addEventListener('message', (e) => {
+    if (e.origin === location.origin && e.data && e.data.retouchWorld && e.data.type === 'input') handsOn();
+  });
+  const trySettle = () => {
+    clearTimeout(settleTimer);
+    const idle = performance.now() - lastInput;
+    if (idle < 400) { settleTimer = setTimeout(trySettle, 400 - idle + 10); return; }
+    if (window.innerWidth < 1100 || !goingDown) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const gap = restY - window.scrollY;
+    if (gap > 2 && gap < 160) window.scrollTo({ top: restY, behavior: 'smooth' });
+  };
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if (y !== lastY) goingDown = y > lastY;
+    lastY = y;
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(trySettle, 180);
+  }, { passive: true });
+
+  // In-page links (the nav, the skip link) still glide, now that the page itself has no smooth scrolling.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || a.getAttribute('href').length < 2) return;
+    const target = document.getElementById(a.getAttribute('href').slice(1));
+    if (!target) return;
+    e.preventDefault();
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    history.replaceState(null, '', a.getAttribute('href'));
+    if (a.classList.contains('skip-link')) target.focus({ preventScroll: true });
+  });
+
+  window.addEventListener('resize', () => {
+    measure();
+    if (window.innerWidth >= 1100) {
+      initTryFrame();
+      initPageWorld();
+      const iframe = document.querySelector('.stage iframe, #stage iframe');
+      if (iframe) sendHeroData(iframe);
+    }
+    onScroll();
+  }, { passive: true });
+})();

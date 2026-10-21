@@ -1,173 +1,421 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
 <title>Retouch</title>
 <link rel="stylesheet" href="homepage.css">
+<script>document.documentElement.classList.remove('no-js');</script>
 </head>
 <body>
-<header class="top">
-  <a class="brand" href="#why"><img src="icons/icon.svg" alt=""><span class="lockup"><span class="fast">fast</span><span class="re">retouch</span></span></a>
-  <nav class="topnav">
-    <a href="#setup">Set up</a>
-    <a href="https://fastretouch.com/about.html">About</a>
-    <a href="#" class="repo-link" target="_blank" rel="noopener">Source</a>
-    <button class="pill primary small ext-only" id="cta-top">Try it</button>
-    <a class="pill primary small web-only store-link" href="#" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Install</a>
-  </nav>
-</header>
+<a href="#main" class="skip-link">Skip to main content</a>
 
-<nav class="dots" aria-label="Slides"></nav>
+<main id="main">
 
-<main class="deck">
+  <!-- Hero Section (the world is the whole first screen) -->
+  <section id="hero">
+    <span class="snap" style="top:0"></span>
+    <span class="snap" id="dock-snap"></span>
+    <div class="stage" id="stage">
+      <div id="try-stage" class="hero-stage-world" aria-label="Try Retouch on a page an AI wrote">
+        <img src="draft-still.webp"
+             srcset="draft-still-720.webp 720w, draft-still.webp 1440w"
+             sizes="(max-width: 1099px) 100vw, 100vw"
+             alt="A landing page an AI wrote, with seven mistakes circled in red"
+             class="try-still"
+             width="1440"
+             height="900"
+             loading="lazy"
+             decoding="async">
+      </div>
+    </div>
+    <header class="site-header">
+      <div class="header-wrap">
+        <a class="brand" href="/" aria-label="fastretouch home">
+          <img src="brand/mark.svg" alt="" class="mark" width="28" height="29">
+          <span class="lockup"><span class="fast">fast</span><span class="retouch">retouch</span></span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="#how">How it works</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#open-source">Open source</a>
+          <a href="#faq">FAQ</a>
+          <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+          <a class="btn-nav" href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add to Chrome</a>
+        </nav>
+      </div>
+    </header>
+    <div class="copy" id="copy">
+      <h1>Fix the HTML your AI wrote.</h1>
+      <p class="lede">Retouch is a free Chrome extension for the pages your AI makes. Open the file, click the text, change it, save. Everything you didn't touch stays byte for byte the same.</p>
+      <div class="ctas">
+        <a class="btn primary" href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a>
+        <a class="btn secondary" href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+      </div>
+      <button class="try" id="try">Try it &darr; <b>seven things on this page are wrong</b></button>
+      <p class="badge"><a class="fine-badge" href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Open source · MIT</a> · Works on HTML files on your computer · Nothing is uploaded</p>
+    </div>
+  </section>
 
-  <section class="slide" id="why" data-title="Why">
+  <!-- Divider 1 -->
+  <div class="divider-wire" data-divider="normal" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(680, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- How it works -->
+  <section class="section" id="how-section">
     <div class="wrap">
-      <p class="eyebrow">01 · Why</p>
-      <h1 class="giant hero"><span class="word">Fix the HTML</span><br><span class="word thin">your AI wrote.</span></h1>
-      <p class="lede">Your AI builds a beautiful page. Then you read it, and the small mistakes start showing. A wrong number. A wrong logo. A word where a number should be. A sentence that reads like a machine wrote it. And a desktop full of screenshots you took to explain all that.</p>
-      <p class="lede accent">You want to fix it in a click, not another prompt or a code editor. Retouch is that click. Click the text, change it, save. In seconds.</p>
-      <div class="row cta"><a class="pill primary big web-only store-link" href="#" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a><button class="pill primary big ext-only" id="cta-hero">Create my practice page</button></div>
-      <p class="fine cta-sub">Free and open source · Works on files on your disk</p>
-      <div class="race" aria-label="Time to fix a typo">
-        <div class="lane"><span class="lbl">Another prompt</span><span class="bar slow"><span></span></span><span class="t">about a minute</span></div>
-        <div class="lane"><span class="lbl">Retouch</span><span class="bar fast"><span></span></span><span class="t">about three seconds</span></div>
+      <h2 id="how">Click. Type. Save.</h2>
+
+      <div class="media-row">
+        <div class="media-text">
+          <p class="step-num">Step 1</p>
+          <p class="section-p"><b>Open the HTML file in Chrome.</b> Any page your AI made: a report, a landing page, a pitch, a portfolio. Click the Retouch icon in the browser toolbar to begin editing.</p>
+        </div>
+        <div class="media-shot">
+          <img src="shots/step-01-toolbar.webp" width="520" height="92" loading="lazy" decoding="async" alt="The Retouch toolbar with Edit and Prompt">
+        </div>
+      </div>
+
+      <div class="media-row alt-reverse">
+        <div class="media-text">
+          <p class="step-num">Step 2</p>
+          <p class="section-p"><b>Click any text and change it.</b> Type right on the page. Bold, links and the page's own colours and fonts are one click away, styled to look native.</p>
+        </div>
+        <div class="media-shot">
+          <img src="shots/step-02-edit.webp" width="480" height="65" loading="lazy" decoding="async" alt="A paragraph being edited in place in Retouch">
+        </div>
+      </div>
+
+      <div class="media-row">
+        <div class="media-text">
+          <p class="step-num">Step 3</p>
+          <p class="section-p"><b>Press Save.</b> Retouch writes only what you changed back into the file. No reformatting, no lost scripts or comments.</p>
+        </div>
+        <div class="media-shot">
+          <img src="shots/step-03-save.webp" width="500" height="109" loading="lazy" decoding="async" alt="Save button showing one change and the saved undo chip">
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="slide" id="compare" data-title="Compare">
+  <!-- Divider 2 -->
+  <div class="divider-wire" data-divider="normal" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(680, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Format section -->
+  <section class="section" id="format-section">
     <div class="wrap">
-      <p class="eyebrow">02 · Ten small fixes</p>
-      <h2 class="display">Each one used to mean a <em>rebuild.</em></h2>
+      <h2>Format with what the page already has.</h2>
+
+      <div class="media-row">
+        <div class="media-text">
+          <p class="section-p">Select text and a small pill appears: bold, italic, code, link. The Styles, Color and Font menus list what this page's own stylesheet uses, described in plain words. Nothing is invented, so nothing looks pasted in.</p>
+        </div>
+        <div class="media-shot">
+          <img src="shots/format-01-menus.webp" width="500" height="224" loading="lazy" decoding="async" alt="The text formatting pill showing the page's own styles and colors menus">
+        </div>
+      </div>
+
+      <div class="media-row alt-reverse">
+        <div class="media-text">
+          <p class="section-p">Swap an image and fix its alt text from the same panel.</p>
+        </div>
+        <div class="media-shot">
+          <img src="shots/format-02-image.webp" width="460" height="181" loading="lazy" decoding="async" alt="Image replacement panel and alt text editing in Retouch">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Divider 3 -->
+  <div class="divider-wire" data-divider="few" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(680, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Comparison table -->
+  <section class="section" id="compare-section" style="position: relative;">
+    <div class="gutter-tree" aria-hidden="true"></div>
+    <div class="wrap">
+      <h2>Ten small fixes. Each one used to mean a rebuild.</h2>
       <table class="compare">
-        <thead><tr><th scope="col">What's wrong</th><th scope="col">What you do today</th><th scope="col">With Retouch</th></tr></thead>
+        <caption>Ten small fixes: what you do today vs with Retouch</caption>
+        <thead>
+          <tr>
+            <th scope="col">What's wrong</th>
+            <th scope="col">What you do today</th>
+            <th scope="col">With Retouch</th>
+          </tr>
+        </thead>
         <tbody>
-          <tr><th scope="row">Typo in the headline</th><td data-label="Today">Re-prompt and wait for a rebuild. Or open a code editor and hunt for the string in 900 lines of generated markup.</td><td data-label="Retouch">Click it, type, save.</td></tr>
-          <tr><th scope="row">18% should be 21%</th><td data-label="Today">The same rebuild. Or find and replace, and hope the number isn't in four other places.</td><td data-label="Retouch">Change the digits in place.</td></tr>
-          <tr><th scope="row">One sentence has to go</th><td data-label="Today">Describe the sentence to the AI and hope it picks the right one.</td><td data-label="Retouch">Select, delete, save.</td></tr>
-          <tr><th scope="row">Placeholder logo where the real one goes</th><td data-label="Today">Paste a file path into the prompt and hope the rebuild finds it.</td><td data-label="Retouch">Click it, Replace image, pick the file.</td></tr>
-          <tr><th scope="row">Alt text is empty or says “image”</th><td data-label="Today">Find the tag in an editor, or accept the gap and move on.</td><td data-label="Retouch">Type it in, Apply.</td></tr>
-          <tr><th scope="row">Three paragraphs that should be bullets</th><td data-label="Today">Ask the AI to reformat, and check it didn't rewrite the words.</td><td data-label="Retouch">Bullets, then Join. Enter adds the next one.</td></tr>
-          <tr><th scope="row">You saved, and wish you hadn't</th><td data-label="Today">Hope the AI still has the old version somewhere.</td><td data-label="Retouch">Undo, or pick any earlier version from History.</td></tr>
-          <tr><th scope="row">The rebuild changed things you liked</th><td data-label="Today">Diff two downloads to find what drifted.</td><td data-label="Retouch">Only what you touched is rewritten.</td></tr>
-          <tr><th scope="row">Downloads full of report(4).html</th><td data-label="Today">Guess which one is current.</td><td data-label="Retouch">Same file, edited in place.</td></tr>
-          <tr><th scope="row">You are not the person who opens a code editor</th><td data-label="Today">Ask someone technical. Wait until Monday.</td><td data-label="Retouch">Click the icon in Chrome.</td></tr>
+          <tr>
+            <th scope="row">Typo in the headline</th>
+            <td data-label="Today">Re-prompt and wait for a rebuild. Or open a code editor and hunt for the string in 900 lines of generated markup.</td>
+            <td data-label="Retouch">Click it, type, save.</td>
+          </tr>
+          <tr>
+            <th scope="row">18% should be 21%</th>
+            <td data-label="Today">The same rebuild. Or find and replace, and hope the number isn't in four other places.</td>
+            <td data-label="Retouch">Change the digits in place.</td>
+          </tr>
+          <tr>
+            <th scope="row">One sentence has to go</th>
+            <td data-label="Today">Describe the sentence to the AI and hope it picks the right one.</td>
+            <td data-label="Retouch">Select, delete, save.</td>
+          </tr>
+          <tr>
+            <th scope="row">Placeholder logo where the real one goes</th>
+            <td data-label="Today">Paste a file path into the prompt and hope the rebuild finds it.</td>
+            <td data-label="Retouch">Click it, Replace image, pick the file.</td>
+          </tr>
+          <tr>
+            <th scope="row">Alt text is empty or says “image”</th>
+            <td data-label="Today">Find the tag in an editor, or accept the gap and move on.</td>
+            <td data-label="Retouch">Type it in, Apply.</td>
+          </tr>
+          <tr>
+            <th scope="row">Three paragraphs that should be bullets</th>
+            <td data-label="Today">Ask the AI to reformat, and check it didn't rewrite the words.</td>
+            <td data-label="Retouch">Bullets, then Join. Enter adds the next one.</td>
+          </tr>
+          <tr>
+            <th scope="row">You saved, and wish you hadn't</th>
+            <td data-label="Today">Hope the AI still has the old version somewhere.</td>
+            <td data-label="Retouch">Undo, or pick any earlier version from History.</td>
+          </tr>
+          <tr>
+            <th scope="row">The rebuild changed things you liked</th>
+            <td data-label="Today">Diff two downloads to find what drifted.</td>
+            <td data-label="Retouch">Only what you touched is rewritten.</td>
+          </tr>
+          <tr>
+            <th scope="row">Downloads full of report(4).html</th>
+            <td data-label="Today">Guess which one is current.</td>
+            <td data-label="Retouch">Same file, edited in place.</td>
+          </tr>
+          <tr>
+            <th scope="row">You are not the person who opens a code editor</th>
+            <td data-label="Today">Ask someone technical. Wait until Monday.</td>
+            <td data-label="Retouch">Click the icon in Chrome.</td>
+          </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <section class="slide" id="what" data-title="What">
-    <div class="wrap two">
-      <div>
-        <p class="eyebrow">03 · What</p>
-        <h2 class="display">Click.<br>Type.<br><em>Save.</em></h2>
-        <p class="lede">Retouch is a Chrome extension. Open the file in Chrome, click the Retouch icon in the toolbar, click any text and change it, press Save. The file on your disk is updated in place, and everything you didn't touch stays byte for byte the same.</p>
-      </div>
-      <div class="demo browser" aria-hidden="true">
-        <div class="chrome-bar">
-          <span class="lights"><i></i><i></i><i></i></span>
-          <span class="url">file:///Users/you/Documents/q3-report.html</span>
-          <span class="callout">Click the Retouch icon →</span>
-          <span class="ext"><span class="ext-icon puzzle"></span><span class="ext-icon retouch"><img src="icons/icon.svg" alt=""></span></span>
-        </div>
-        <div class="demo-bar"><img src="icons/icon.svg" alt=""><span>Q3 Pipeline Report</span><span class="demo-badge">1 change</span><span class="demo-save">Save</span></div>
-        <div class="demo-page">
-          <h3>Summary</h3>
-          <p>Pipeline grew <span class="demo-change"><span class="demo-old">18%</span><span class="demo-new">21%</span></span> quarter over quarter, driven mainly by event-sourced opportunities.</p>
-          <p class="demo-muted">Generated by an AI assistant. Numbers are illustrative.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- Divider 4 -->
+  <div class="divider-wire" data-divider="normal" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(680, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
 
-  <section class="slide" id="local" data-title="Local">
+  <!-- Prompt notes / AI handoff -->
+  <section class="section" id="prompt-section">
     <div class="wrap">
-      <p class="eyebrow">04 · Where your files go</p>
-      <h2 class="display">Nowhere.</h2>
-      <p class="lede">No server, no account, no upload. Retouch reads and writes the file on your own disk and nothing else. It is open source, so you can check.</p>
-      <ul class="facts">
-        <li><b>Byte for byte.</b> Only the text you changed is rewritten. Comments, spacing and scripts stay exactly as your AI left them.</li>
-        <li><b>Script-aware.</b> Text a script generates at load is refused, not silently corrupted.</li>
-        <li><b>Yours.</b> MIT licensed. Fork it, read it, keep it.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="slide" id="format" data-title="Format">
-    <div class="wrap two">
-      <div>
-        <p class="eyebrow">05 · Formatting</p>
-        <h2 class="display">Only what the<br>page already<br><em>knows.</em></h2>
-        <p class="lede">Select text and a small pill appears: bold, italic, code, link. The Styles, Color and Font menus list what this page's own stylesheet uses, described in plain words. Nothing is invented, so nothing looks pasted in.</p>
-      </div>
-      <div class="demo pop" aria-hidden="true">
-        <div class="demo-pill"><b>B</b><i>I</i><code>&lt;/&gt;</code><span>Link</span><span class="sep"></span><span>Styles ▾</span><span>Color ▾</span><span>Font ▾</span></div>
-        <div class="demo-menu">
-          <div><span class="sw" style="background:#1f2933"></span>Dark gray</div>
-          <div><span class="sw" style="background:#52606d"></span>Gray</div>
-          <div><span class="sw" style="background:#1f6feb"></span>Blue</div>
-          <div><span class="sw" style="background:#f4c05f"></span>Pale yellow</div>
+      <h2>Text in Retouch. Layout back to your AI.</h2>
+      <div class="media-row">
+        <div class="media-text">
+          <p class="section-p">Some fixes aren't typing: move this section, make these cards sit side by side. Switch to Prompt, pin a note on the part you mean, and copy one clean prompt for ChatGPT, Claude or whichever AI made the page. It names the exact element and line, so the AI changes that and nothing else.</p>
+        </div>
+        <div class="media-shot">
+          <img src="shots/prompt-ai.webp" width="480" height="281" loading="lazy" decoding="async" alt="A prompt note pinned to an element and the notes bar after copying for AI">
         </div>
       </div>
     </div>
   </section>
 
-  <section class="slide" id="setup" data-title="Set up">
+  <!-- Divider 5 (Privacy sleepy bird) -->
+  <div class="divider-wire" data-divider="privacy" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(690, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Privacy -->
+  <section class="section" id="privacy-section">
     <div class="wrap">
-      <p class="eyebrow">06 · Set up, once</p>
-      <h2 class="display">One minute.</h2>
-      <ol class="steps">
-        <li id="step-install" class="web-only">
-          <span class="num"></span>
-          <div>
-            <h3>Install Retouch</h3>
-            <p>One click from the Chrome Web Store. Prefer to see the code first? The latest release on GitHub is the same files: unzip, open <code>chrome://extensions</code>, switch on Developer mode, <b>Load unpacked</b>.</p>
-            <div class="row"><a class="pill primary store-link" href="#" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a><a class="pill releases-link" href="#" target="_blank" rel="noopener">Download the zip</a></div>
+      <h2 id="privacy">Where do your files go? Nowhere.</h2>
+      <div class="media-row">
+        <div class="media-text">
+          <p class="section-p">No account, no server, no upload. Retouch reads and writes the file on your own computer and nothing else. Every save keeps the version before it, on your computer, so you can undo a save or go back further. It's open source under the MIT licence, so you can check.</p>
+        </div>
+        <div class="media-shot">
+          <img src="shots/history.webp" width="420" height="187" loading="lazy" decoding="async" alt="Retouch version history popover showing earlier saved versions">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Divider 6 -->
+  <div class="divider-wire" data-divider="few" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(680, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Open source -->
+  <section class="section" id="open-source-section">
+    <div class="wrap">
+      <h2 id="open-source">Open source, all of it.</h2>
+      <p class="section-p">Every line of Retouch is on GitHub under the MIT licence. Read the code, check that it makes no network calls, report a bug, or send a fix.</p>
+      <div class="hero-actions" style="margin-top: 48px;">
+        <a class="btn primary" href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+        <a class="btn secondary" href="https://github.com/kamanashishroy/retouch/issues" target="_blank" rel="noopener">Report an issue</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Setup -->
+  <section class="section" id="setup-section">
+    <div class="wrap">
+      <h2 id="setup">Set up in a minute.</h2>
+      <ol class="setup-steps">
+        <li>
+          <h3>Install Retouch</h3>
+          <p>One click from the Chrome Web Store. Prefer to see the code first? The latest release on GitHub is the same files: unzip, open <code>chrome://extensions</code>, switch on Developer mode, <b>Load unpacked</b>.</p>
+          <div class="row">
+            <a class="btn primary small" href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a>
+            <a class="btn secondary small" href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
           </div>
         </li>
-        <li id="step-access">
-          <span class="num"></span>
-          <div>
-            <h3>Let Retouch see local files</h3>
-            <p>Chrome hides files on your disk from extensions until you allow it. Open Retouch's details and switch on <b>Allow access to file URLs</b>.</p>
-            <div class="row"><button class="pill ext-only" id="open-details">Open Retouch details</button><span class="state ext-only" id="access-state">Checking…</span></div>
-          </div>
+        <li>
+          <h3>Let Retouch see local files</h3>
+          <p>Chrome hides files on your disk from extensions until you allow it. Open Retouch's details and switch on <b>Allow access to file URLs</b>.</p>
         </li>
-        <li id="step-restart">
-          <span class="num"></span>
-          <div>
-            <h3>Restart Chrome</h3>
-            <p>Chrome applies that switch only after a restart. Quit it, open it, come back to this page.</p>
-          </div>
-        </li>
-        <li id="step-practice">
-          <span class="num"></span>
-          <div>
-            <h3>Get a practice page</h3>
-            <p>Retouch drops a small tutorial page into a <b>Retouch</b> folder in your Downloads and opens it. Everything on it is there to be edited.</p>
-            <div class="row"><button class="pill primary ext-only" id="make-practice">Create my practice page</button><span class="state" id="practice-state"></span><span class="state web-only">Available once Retouch is installed. Click its icon in the toolbar and choose the tour.</span></div>
-          </div>
+        <li>
+          <h3>Restart Chrome</h3>
+          <p>Chrome applies that switch only after a restart. Quit it, open it, come back to this page.</p>
         </li>
       </ol>
     </div>
   </section>
 
-  <section class="slide" id="go" data-title="Go">
-    <div class="wrap center">
-      <p class="eyebrow">07 · Go</p>
-      <h2 class="giant"><span class="word">Try</span> <span class="word thin">it.</span></h2>
-      <p class="lede">Open any HTML file your AI made, click the Retouch icon, fix the thing.</p>
-      <div class="row center"><button class="pill primary big ext-only" id="cta-bottom">Create my practice page</button><a class="pill primary big web-only store-link" href="#" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a></div>
-      <p class="fine">Chrome, Edge, Brave and Arc. Files on your disk only. Nothing leaves your machine.</p>
-      <p class="fine"><a href="https://fastretouch.com/about.html">Made by Kamanashish Roy</a> · <a class="repo-link" href="#" target="_blank" rel="noopener">Open source on GitHub</a> · <a href="https://fastretouch.com/privacy.html">Privacy</a> · Support: <a href="https://x.com/doubts" target="_blank" rel="noopener">@doubts on X</a> or <a href="mailto:hello@fastretouch.com">hello@fastretouch.com</a></p>
+  <!-- Divider 7 (FAQ blinking bird) -->
+  <div class="divider-wire" data-divider="faq" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(710, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- FAQ -->
+  <section class="section" id="faq-section">
+    <div class="wrap faq-layout">
+      <div class="faq-aside">
+        <h2 id="faq">Questions</h2>
+        <div class="roost-slot" aria-hidden="true"></div>
+      </div>
+      <div class="faq-list">
+<!-- FAQ_ITEMS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Divider 8 -->
+  <div class="divider-wire" data-divider="closing" aria-hidden="true">
+    <svg class="divider-svg static-wire" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path fill="none" stroke="var(--ink, #231f20)" stroke-width="2" stroke-linecap="round" d="M0 20 Q 720 35 1440 20"/>
+      <g class="still-bird" transform="translate(620, -22.2) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+      <g class="still-bird" transform="translate(680, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+      <g class="still-bird" transform="translate(740, -22.1) scale(0.073)">
+        <path fill="#ed1c24" d="M274.6,59.7h-120.2c-32.2,0-58.3,26.1-58.3,58.3v185.3c0,15.5-6.1,30.3-17.1,41.3l229.5-229.5,26.6-26.6v-28.8h-60.4Z"/>
+        <path fill="#231f20" d="M78.9,344.6l-57.3,57.3c-5.5,5.5-1.6,14.9,6.2,14.9h67.6c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h63.7c5.9,0,10.6,4.8,10.6,10.6v100.7c0,.8-.3,1.5-.8,2l-2.3,2.3c-1.1,1.1-1.1,2.9,0,4.1l2.3,2.3c.5.5.8,1.3.8,2v107.4c0,3.9-3.1,7-7,7h-6.9v5h32.8v-5h-6.9c-3.9,0-7-3.1-7-7v-107.3c0-.8.3-1.5.8-2l2.4-2.4c1.1-1.1,1.1-2.9,0-4.1l-2.4-2.4c-.5-.5-.8-1.3-.8-2v-100.7c0-5.9,4.8-10.6,10.6-10.6h4.5c32.2,0,58.3-26.1,58.3-58.3v-185.3c0-15.5,6.1-30.3,17.1-41.3l-212.7,212.7s0,0,0,0Z"/>
+        <polygon fill="#231f20" points="335 59.7 335 88.5 363.8 59.7 335 59.7"/>
+        <circle fill="#231f20" cx="169" cy="131.5" r="33.2"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Closing section -->
+  <section class="section closing-section" id="closing-section">
+    <div class="wrap">
+      <h2>Fix the next page your AI writes.</h2>
+      <div class="hero-actions" style="margin-top: 28px;">
+        <a class="btn primary install-btn" href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M0 256c0-46.6 12.47-90.4 34.27-128.9L144.1 318.3C166 357.5 207.9 384 256 384c14.3 0 27.1-2.3 40.8-6.6l-76.3 132.2C95.9 492.3 0 385.3 0 256zm365.1 65.6c12.3-19.2 18.9-42.5 18.9-65.6c0-38.2-16.8-72.5-43.3-96h152.7c12 29.6 18.6 62.1 18.6 96c0 141.4-114.6 255.1-256 256l109.1-190.4zM477.8 128H256c-62.9 0-113.7 44.1-125.5 102.7L54.19 98.47C101 38.53 174 0 256 0c94.8 0 177.5 51.48 221.8 128zM168 256c0-48.6 39.4-88 88-88s88 39.4 88 88s-39.4 88-88 88s-88-39.4-88-88z"/></svg>Add Retouch to Chrome</a>
+        <a class="btn secondary" href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+      </div>
     </div>
   </section>
 
 </main>
+
+<footer class="site-footer">
+  <div class="footer-wrap wrap">
+    <div class="footer-brand">
+      <img src="brand/mark.svg" alt="" class="mark" width="24" height="25">
+      <span class="lockup"><span class="fast">fast</span><span class="retouch">retouch</span></span>
+      <span class="footer-bird-slot"></span>
+    </div>
+    <nav class="footer-nav" aria-label="Footer navigation">
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+      <a href="https://github.com/kamanashishroy/retouch/blob/main/LICENSE" target="_blank" rel="noopener">MIT licence</a>
+      <a href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener">Chrome Web Store</a>
+    </nav>
+    <p class="footer-credit">Made by <a href="about.html">Kamanashish Roy</a></p>
+  </div>
+</footer>
+
 <script src="homepage.js"></script>
 </body>
 </html>

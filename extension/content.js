@@ -2813,7 +2813,10 @@
     send({ type: 'prompt-changed', items: [...state.pins.values()].map((r) => Object.assign({}, r)) });
     sendPositions();
   }
-  function removePin(id) {
+  // `silent` tears a pin down without reporting it: used when Prompt mode is left or the pins are rebuilt, where
+  // the notes still exist. Reporting each removal there made the viewer save an ever-shorter list, so leaving
+  // Prompt mode erased every note.
+  function removePin(id, silent) {
     state.pins.delete(id);
     state.pinTargets.delete(id);
     const pin = pinEl(id);
@@ -2821,7 +2824,7 @@
     const boxEl = state.overlay && state.overlay.querySelector(`.retouch-region-box[data-id="${id}"]`);
     if (boxEl) boxEl.remove();
     if (state.activeCard && state.activeCard.id === id) state.activeCard = null;
-    notifyChanged();
+    if (!silent) notifyChanged();
   }
   function addPin(target, selected) {
     const rec = elementRecord(target);
@@ -2902,7 +2905,7 @@
   // document order. A request that no longer matches anything is kept, greyed, with `lost: true`.
   function restorePrompt(items) {
     closeCard();
-    for (const id of [...state.pins.keys()]) { removePin(id); }
+    for (const id of [...state.pins.keys()]) { removePin(id, true); }
     state.pins.clear();
     state.pinTargets.clear();
     const candidates = [...document.body.querySelectorAll('*')].filter((e) => !isUi(e));
@@ -2937,7 +2940,7 @@
     });
     if (state.promptHover) { state.promptHover.removeAttribute('data-retouch-prompt-hover'); state.promptHover = null; }
     closeCard();
-    for (const id of [...state.pins.keys()]) { removePin(id); }
+    for (const id of [...state.pins.keys()]) { removePin(id, true); }
     if (state.overlay) { state.overlay.remove(); state.overlay = null; }
     state.pins.clear();
     state.pinTargets.clear();

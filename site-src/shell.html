@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<title>Retouch</title>
+<link rel="stylesheet" href="editor/viewer.css">
+<link rel="stylesheet" href="world/world.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+:root {
+  --paper: #f3efe6;
+  --page: #efe9f3;
+}
+html, body {
+  background: var(--paper, #f3efe6) !important;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0b0b0d;
+  }
+}
+</style>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+    .then((reg) => {
+      reg.update().catch(() => {});
+    })
+    .catch(() => {});
+}
+</script>
+</head>
+<body>
+<!-- RETOUCH_VIEWER_TEMPLATE -->
+<script>
+(() => {
+  let draftReady = false;
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    if (e.data.type === 'ready' || (e.data.retouchWorld && e.data.type === 'fixes') || e.data.type === 'fixes') {
+      draftReady = true;
+      try { sessionStorage.removeItem('retouch_demo_healed'); } catch (err) {}
+    }
+  });
+
+  const frame = document.getElementById('frame');
+  const attemptHeal = async () => {
+    if (!draftReady) {
+      let healed = false;
+      try { healed = !!sessionStorage.getItem('retouch_demo_healed'); } catch (e) {}
+      if (!healed) {
+        try { sessionStorage.setItem('retouch_demo_healed', '1'); } catch (e) {}
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const reg of regs) {
+              await reg.unregister();
+            }
+          }
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            for (const k of keys) {
+              await caches.delete(k);
+            }
+          }
+        } catch (err) {}
+        // Reload the frame once to bypass broken SW
+        if (frame) {
+          frame.src = frame.src;
+        }
+      }
+    }
+  };
+
+  if (frame) {
+    frame.addEventListener('load', () => {
+      setTimeout(attemptHeal, 3000);
+    });
+  }
+  setTimeout(attemptHeal, 3500);
+})();
+</script>
+<script src="editor/idb.js"></script>
+<script src="editor/history.js"></script>
+<script src="editor/describe.js"></script>
+<script src="editor/patch.js"></script>
+<script src="editor/prompt.js"></script>
+<script src="editor/demo-vault.js"></script>
+<script src="editor/viewer.js"></script>
+<script src="vendor/gsap.min.js"></script>
+<script src="draft/bird.js"></script>
+<script src="draft/tree.js"></script>
+<script src="draft/wires.js"></script>
+<script src="world/world.js"></script>
+</body>
+</html>

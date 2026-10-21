@@ -1,0 +1,406 @@
+:root {
+  --paper: #f3efe6;
+  --ink: #231f20;
+  --red: #ed1c24;
+  --gold: #c8902a;
+  --win-left: clamp(16px, 14vw, 200px);
+  --win-right: clamp(16px, 14vw, 200px);
+  --win-top: 76px;
+  --win-bottom: 32px;
+  --lift: 0px;
+}
+
+@media (min-width: 1100px) {
+  body.has-world {
+    background: var(--paper) !important;
+  }
+  body.has-world::before {
+    display: none !important;
+  }
+
+  .window {
+    position: fixed;
+    left: var(--win-left, clamp(16px, 14vw, 200px));
+    right: var(--win-right, clamp(16px, 14vw, 200px));
+    top: 76px;
+    bottom: 32px;
+    border-radius: 22px;
+    background:
+      radial-gradient(40% 50% at 15% 0%, rgba(154, 92, 163, .25), transparent 70%),
+      radial-gradient(35% 45% at 55% 5%, rgba(217, 179, 226, .22), transparent 70%),
+      radial-gradient(35% 45% at 95% 0%, rgba(244, 192, 95, .25), transparent 70%),
+      #efe9f3;
+    /* the shell iframe ends 32px below the docked window and can't paint past itself: the shadow must end inside
+       that (10 + 22 - 4 = 28px), or it's cut in a straight line across the page */
+    box-shadow: 0 2px 6px rgba(35, 31, 32, .08), 0 10px 22px -4px rgba(35, 31, 32, .16), 0 0 0 1px rgba(35, 31, 32, .08);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+    transform: translateY(var(--lift, 0px));
+    box-sizing: border-box;
+  }
+
+  .chrome {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    background: #efebe4;
+    border-bottom: 1px solid rgba(35, 31, 32, .08);
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+
+  .lights {
+    display: flex;
+    gap: 7px;
+    flex: none;
+  }
+
+  .lights i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #d9d3c9;
+    display: block;
+  }
+
+  .tab {
+    flex: none;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .addr {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    border-radius: 14px;
+    background: #fff;
+    font: 12px/28px ui-monospace, SF Mono, Menlo, monospace;
+    color: #52606d;
+    padding: 0 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+  }
+
+  .addr .caret {
+    display: inline-block;
+    width: 1px;
+    height: 13px;
+    background: #52606d;
+    vertical-align: -2px;
+    margin-left: 1px;
+  }
+
+  .ext {
+    position: relative;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #f3efe6;
+    border: 1px solid rgba(35, 31, 32, .12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(35, 31, 32, .08);
+  }
+
+  .ext-mark {
+    display: block;
+    width: 18px;
+    height: 19px;
+    pointer-events: none;
+  }
+
+  .ripple {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .dock-catcher {
+    position: fixed;
+    left: var(--win-left, clamp(16px, 14vw, 200px));
+    right: var(--win-right, clamp(16px, 14vw, 200px));
+    top: 76px;
+    bottom: 32px;
+    transform: translateY(var(--lift, 0px));
+    border-radius: 22px;
+    z-index: 100;
+    cursor: pointer;
+    display: block;
+  }
+  .dock-catcher.docked {
+    display: none !important;
+  }
+
+  .hint {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: var(--muted, #5d5a55);
+    background: rgba(255, 255, 255, .85);
+    padding: 6px 12px;
+    border-radius: 999px;
+    pointer-events: none;
+  }
+
+  body.has-world.opening-pending #bar {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    animation: none !important;
+  }
+
+  body.has-world #bar {
+    position: fixed !important;
+    top: calc(76px + 58px) !important;
+    left: calc(var(--win-left, clamp(16px, 14vw, 200px)) + 12px) !important;
+    right: calc(var(--win-right, clamp(16px, 14vw, 200px)) + 12px) !important;
+    width: calc(100% - 2 * var(--win-left, clamp(16px, 14vw, 200px)) - 24px) !important;
+    height: 56px !important;
+    box-sizing: border-box !important;
+    transform: translateY(var(--lift, 0px)) !important;
+    z-index: 4 !important;
+    --secondary: var(--fg);
+  }
+
+  /* the Edit/Prompt pill sits over the warmest glow: make it opaque enough for AA in light mode */
+  @media (prefers-color-scheme: light) {
+    body.has-world #bar .segmented { background: rgba(255, 255, 255, .85); }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .chrome {
+      background: #2b2a33;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+    .lights i {
+      background: #52515a;
+    }
+    .tab {
+      background: #3b3a45;
+      color: #f5f5f7;
+    }
+    .addr {
+      background: #1c1b22;
+      color: #d0d0d5;
+    }
+    .addr .caret {
+      background: #d0d0d5;
+    }
+    .ext {
+      background: #3b3a45;
+      border-color: rgba(255, 255, 255, .15);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+    }
+    .hint {
+      background: rgba(43, 42, 51, .85);
+      color: #d0d0d5;
+    }
+    .window {
+      background:
+        radial-gradient(40% 50% at 15% 0%, rgba(131, 24, 67, .25), transparent 70%),
+        radial-gradient(35% 45% at 55% 5%, rgba(30, 27, 75, .35), transparent 70%),
+        radial-gradient(35% 45% at 95% 0%, rgba(120, 53, 15, .2), transparent 70%),
+        #0b0b0d;
+    }
+    body.has-world #bar {
+      --fg: #ffffff;
+      --secondary: #ffffff;
+    }
+  }
+
+  /* the viewer gives its frame a 60px shadow; inside the window it would reach past the window and be cut where
+     the shell iframe ends, drawing a band across the page */
+  body.has-world #frame { box-shadow: none !important; }
+
+  body.has-world #frame,
+  body.has-world #dropmat {
+    position: fixed !important;
+    top: calc(76px + 126px) !important;
+    left: calc(var(--win-left, clamp(16px, 14vw, 200px)) + 12px) !important;
+    right: calc(var(--win-right, clamp(16px, 14vw, 200px)) + 12px) !important;
+    bottom: calc(32px + 12px) !important;
+    width: calc(100% - 2 * var(--win-left, clamp(16px, 14vw, 200px)) - 24px) !important;
+    height: calc(100% - 76px - 32px - 138px) !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+    transform: translateY(var(--lift, 0px)) !important;
+    z-index: 2 !important;
+  }
+
+  body.has-world .pop {
+    position: fixed !important;
+    top: calc(76px + 112px) !important;
+    right: calc(var(--win-right, clamp(16px, 14vw, 200px)) + 16px) !important;
+    transform: translateY(var(--lift, 0px)) !important;
+    z-index: 5 !important;
+  }
+
+  body.has-world .dock:not(.moved) {
+    position: fixed !important;
+    bottom: calc(32px + 28px) !important;
+    left: 50% !important;
+    transform: translate(-50%, var(--lift, 0px)) !important;
+    width: min(860px, calc(100% - 2 * var(--win-left, clamp(16px, 14vw, 200px)) - 48px)) !important;
+    z-index: 5 !important;
+  }
+}
+
+#wires {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#wires path {
+  fill: none;
+  stroke: var(--ink, #231f20);
+  stroke-width: 2;
+}
+
+.bird-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scenery {
+  z-index: 3;
+}
+
+#world-live {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (max-width: 1099px) {
+  #wires, .window, .scenery, .bird-layer, .dock-catcher {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Designed thin scrollbars */
+html, body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(35, 31, 32, 0.25) transparent;
+}
+
+/* Calm paper failure panel centered inside window body below bar */
+.demo-error-panel {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: var(--paper, #f3efe6);
+  border: 1px solid rgba(35, 31, 32, 0.15);
+  box-shadow: 0 12px 36px rgba(35, 31, 32, 0.12);
+  border-radius: 16px;
+  padding: 32px 40px;
+  text-align: center;
+  color: #231f20;
+  max-width: 380px;
+  width: calc(100% - 64px);
+  box-sizing: border-box;
+}
+.demo-error-panel .demo-error-mark {
+  display: block;
+  margin: 0 auto 16px;
+  width: 48px;
+  height: 48px;
+}
+.demo-error-panel .demo-error-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #231f20;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+.demo-error-panel .demo-error-msg {
+  font-size: 14px;
+  color: #555250;
+  margin: 0 0 20px;
+}
+.demo-error-panel .btn.primary {
+  background: #231f20;
+  color: #ffffff;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.demo-error-panel .btn.primary:hover {
+  background: #ed1c24;
+}
+@media (prefers-color-scheme: dark) {
+  html, body {
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  }
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(35, 31, 32, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(35, 31, 32, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+}
