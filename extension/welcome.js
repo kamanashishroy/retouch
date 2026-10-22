@@ -19,6 +19,7 @@ function checkAccess() {
     accessState.textContent = ok ? 'On. Retouch can see your files.' : 'Off. Switch it on in Chrome Settings, then restart Chrome.';
     accessState.className = 'state ' + (ok ? 'ok' : 'warn');
     if (toggleFile) toggleFile.classList.toggle('on', isFileAccessAllowed);
+    if (ok && typeof RetouchReach !== 'undefined') RetouchReach.mark('access');
   });
 }
 checkAccess();

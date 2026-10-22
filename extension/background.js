@@ -17,9 +17,17 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.tabs.create({ url: chrome.runtime.getURL('notice.html') + (url ? '?reason=not-local' : '?reason=unknown') });
 });
 
-// First install: open the setup screen.
+importScripts('idb.js', 'reach.js');
+
+// First install: open the setup screen. Install and update both point the uninstall page (D51) at
+// this version and how far the user has got.
 chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === 'install') chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
+  if (details.reason === 'install') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
+    RetouchReach.mark('installed');
+  } else if (details.reason === 'update') {
+    RetouchReach.refresh();
+  }
 });
 
 // Register context menu for capturing region screenshots. onInstalled and onStartup can both fire

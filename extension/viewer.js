@@ -33,6 +33,9 @@ const dirName = dirPath.split('/').pop() || dirPath;
 // The status line is a short-lived chip next to the page title. Errors stay until dismissed
 // or the next action; successes/confirmations disappear after 3.2 s; nothing is shown at rest.
 let statusTimer = null;
+// The review / share card (see countSaveForShare); declared here because render() can hide it.
+const shareEls = { card: $('share'), title: $('share-title'), review: $('share-review'), post: $('share-post'), later: $('share-later'), close: $('share-close') };
+let shareTimer = null;
 // Every status and every step of a save goes into the diagnostics log and, mirrored, to the console.
 function logLine(line) {
   state.log.push(line);
@@ -121,6 +124,7 @@ async function diagnostics() {
 }
 function render() {
   const pending = state.count + state.structural;
+  if (state.promptMode) hideShare();
   els.edit.classList.toggle('active', state.editing);
   els.prompt.classList.toggle('active', state.promptMode);
   els.colors.hidden = !state.editing;
@@ -194,6 +198,7 @@ if (!/^file:\/\//i.test(src)) {
     switch (m.type) {
       case 'ready':
         state.ready = true;
+        if (typeof RetouchReach !== 'undefined') RetouchReach.mark('opened');
         // The page's own title is shown left-aligned. If no title, show filename.
         if (m.title && m.title.trim()) {
           els.title.textContent = m.title.trim();
@@ -887,6 +892,8 @@ async function save() {
     } else {
       setStatus(`Saved at ${timeStr}`, 'ok');
     }
+    countSaveForShare();
+    if (typeof RetouchReach !== 'undefined') RetouchReach.mark('saved');
   } catch (e) {
     setStatus(e.message || String(e), 'error');
   } finally {
@@ -1289,6 +1296,60 @@ document.addEventListener('drop', async (e) => {
     setStatus(err.message || String(err), 'error');
   }
 });
+// After the third successful save, a card asks for a store review or a post on X; "Not now" or
+// ignoring it brings it back once at the 25th save, × never. Both are plain links the user clicks:
+// nothing is sent, and nothing from the page goes into them. The count lives in the viewer's own
+// localStorage, so it needs no storage permission; if that is unavailable the card never shows.
+const SHARE_KEY = 'retouch:share';
+const STORE_REVIEWS = 'https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh/reviews';
+const SHARE_TEXT = 'Fixed the HTML page my AI made in seconds: clicked, typed, and Retouch saved it straight to the file. No re-prompting.';
+const SHARE_POST = `https://x.com/intent/post?text=${encodeURIComponent(SHARE_TEXT)}&url=${encodeURIComponent('https://fastretouch.com')}&via=doubts`;
+function readShare() {
+  try { return JSON.parse(localStorage.getItem(SHARE_KEY)) || { saves: 0, ask: 'first' }; }
+  catch (e) { return null; }
+}
+function writeShare(s) { try { localStorage.setItem(SHARE_KEY, JSON.stringify(s)); } catch (e) { /* card just won't come back */ } }
+function countSaveForShare() {
+  const s = readShare();
+  if (!s) return;
+  s.saves++;
+  const due = (s.ask === 'first' && s.saves >= 3) || (s.ask === 'again' && s.saves >= 25);
+  if (due) s.ask = s.ask === 'first' ? 'again' : 'never';
+  writeShare(s);
+  if (due) setTimeout(() => showShare(s.saves), 1200);
+}
+function showShare(saves) {
+  if (state.promptMode) return;
+  shareEls.title.textContent = `That's ${saves} saves without re-prompting your AI.`;
+  shareEls.review.href = STORE_REVIEWS;
+  shareEls.post.href = SHARE_POST;
+  shareEls.card.hidden = false;
+  logLine(`${new Date().toISOString()} [info] share card shown at save ${saves}`);
+  armShareTimer();
+}
+// It leaves on its own after 20 s, but not while the pointer or keyboard focus is on it.
+function armShareTimer() {
+  clearTimeout(shareTimer);
+  shareTimer = setTimeout(hideShare, 20000);
+}
+function hideShare() {
+  clearTimeout(shareTimer);
+  shareEls.card.hidden = true;
+}
+function neverShare() {
+  const s = readShare();
+  if (s) { s.ask = 'never'; writeShare(s); }
+  hideShare();
+}
+shareEls.card.addEventListener('pointerenter', () => clearTimeout(shareTimer));
+shareEls.card.addEventListener('pointerleave', armShareTimer);
+shareEls.card.addEventListener('focusin', () => clearTimeout(shareTimer));
+shareEls.card.addEventListener('focusout', armShareTimer);
+shareEls.review.addEventListener('click', neverShare);
+shareEls.post.addEventListener('click', neverShare);
+shareEls.later.addEventListener('click', hideShare);
+shareEls.close.addEventListener('click', neverShare);
+
 // Feedback from the one moment it matters most: a failed save. A mailto the user reviews and sends
 // themselves, with the error and version only (no page contents, no file path), so nothing leaves
 // the machine unless they choose to send it.

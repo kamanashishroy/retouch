@@ -1,12 +1,27 @@
 # Retouch
 
-**[fastretouch.com](https://fastretouch.com)** · Fix the HTML your AI wrote. In seconds.
+**Fix the small stuff yourself. Send the rest to your AI as one prompt.**
 
-Retouch is a Chrome extension for the HTML pages your AI keeps generating: reports, dashboards,
-one-pagers. Open the file, click the Retouch icon, click any text, change it, press Save. The file
-on your disk is updated in place, and everything you did not touch stays byte for byte the same.
+[Add to Chrome](https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh) ·
+[fastretouch.com](https://fastretouch.com) · Free · MIT · Nothing leaves your machine
 
-Nothing leaves your machine. No server, no account, no upload. The full [privacy policy](https://fastretouch.com/privacy.html) fits on one page.
+![Two ways to finish the page: fix it yourself in Edit mode, or pin notes in Prompt mode and copy one prompt for your AI](site-src/readme/two-ways.webp)
+
+Your AI made the page: a report, a proposal, a dashboard. Then the feedback arrives. A manager wants a
+heading reworded, a client spots a wrong number, someone wants a section reworked. Every one of those
+turns into another prompt, and the AI often fixes one thing and changes three others.
+
+Retouch is a Chrome extension for HTML files on your computer. It splits that feedback in two:
+
+- **Small fixes, you make.** Click any text, change it, press Save. The file on your disk is patched in
+  place, and everything you did not touch stays byte for byte the same.
+- **Bigger changes, your AI makes.** Pin a note on the exact spot, keep reviewing, then copy one prompt
+  with every note tied to its place. One round trip instead of twelve.
+
+No HTML knowledge needed. No server, no account, no upload. The full
+[privacy policy](https://fastretouch.com/privacy.html) fits on one page.
+
+![Editing a sentence in place, with the change counter on the Save button](site-src/readme/edit-in-place.webp)
 
 ## What it does
 
@@ -47,6 +62,12 @@ Chrome, Edge, Brave and Arc. Local files only.
 - `extension/` is the extension. It has no build step; load it unpacked as is.
 - `node --test tests/*.test.mjs` runs the unit tests for the source patcher and the style describer.
 - `node scripts/build-site.mjs` builds the website into `site/` from `site-src/homepage.html`.
+
+## Contributing
+
+Bug reports are the most useful thing you can send: [open an issue](https://github.com/kamanashishroy/retouch/issues)
+and attach the HTML page that broke, if you can share it. Pull requests are read, and good ones are applied by hand,
+because this repository is published from a separate working copy.
 
 ## License
 

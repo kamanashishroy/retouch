@@ -78,6 +78,18 @@
     <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M 1 1 L 11 11 M 11 1 L 1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
   </button>
 </div>
+<div id="share" class="share" hidden role="region" aria-label="Enjoying Retouch?">
+  <p id="share-title" class="share-title"></p>
+  <p class="share-text">If Retouch is useful, a review helps other people find it.</p>
+  <div class="share-actions">
+    <a id="share-review" class="btn small primary" target="_blank" rel="noopener">Leave a review</a>
+    <a id="share-post" class="btn small" target="_blank" rel="noopener">Post on X</a>
+    <button id="share-later" class="btn small ghost" type="button">Not now</button>
+  </div>
+  <button id="share-close" class="banner-close" type="button" title="Don't ask again" aria-label="Don't ask again">
+    <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M 1 1 L 11 11 M 11 1 L 1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+  </button>
+</div>
 <div id="theme" class="pop" hidden role="dialog" aria-label="Page colors"></div>
 <div id="history-pop" class="pop" hidden role="dialog" aria-label="Version history"></div>
 <iframe id="frame" title="Local page"></iframe>
@@ -133,6 +145,7 @@
 </div>
 <div id="error" class="error" hidden></div>
 <script src="idb.js"></script>
+<script src="reach.js"></script>
 <script src="history.js"></script>
 <script src="describe.js"></script>
 <script src="patch.js"></script>

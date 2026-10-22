@@ -37,6 +37,11 @@ export const REPLACEMENTS = {
       replacement: "if (!/^file:\\/\\//i.test(src) && !/embed=1/.test(src)) {"
     },
     {
+      // The review / share card is for people who installed Retouch, not for visitors trying the demo.
+      target: "    countSaveForShare();\n",
+      replacement: ""
+    },
+    {
       target: "post({ type: 'commit', renames });",
       replacement: "post({ type: 'commit', renames }); els.frame.src = src;"
     },

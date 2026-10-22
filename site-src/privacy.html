@@ -45,7 +45,7 @@
     <p class="eyebrow">Privacy policy</p>
     <h1 class="giant"><span class="word">Nothing leaves</span><br><span class="word thin">your machine.</span></h1>
     <p class="lede">Retouch is a Chrome extension that edits the text of HTML files on your own disk and saves them in place. This page says exactly what it stores, what it reads and writes, and what it never does. It is short because there is little to tell.</p>
-    <p class="meta">Effective 16 October 2026 (updated for version history and notes). Applies to Retouch 0.4.0 and later, installed from the Chrome Web Store, the Microsoft Edge Add-ons store or GitHub.</p>
+    <p class="meta">Effective 21 October 2026 (updated for the review card and the uninstall question). Applies to Retouch 0.5.0 and later, installed from the Chrome Web Store, the Microsoft Edge Add-ons store or GitHub.</p>
     <div class="grid">
       <div class="no"><b>No server</b><span>Retouch makes no network requests. There is no account, no sign-in, no upload and no update check of its own.</span></div>
       <div class="no"><b>No analytics</b><span>No usage tracking, crash reporting, telemetry or third-party scripts of any kind.</span></div>
@@ -73,10 +73,11 @@
   <div class="policy-text">
   <section class="body" id="stores">
     <h2>What Retouch stores on your device</h2>
-    <p>Retouch keeps three kinds of record in the browser's storage for the extension (IndexedDB), on your computer only:</p>
+    <p>Retouch keeps four kinds of record in the browser's storage for the extension (IndexedDB), on your computer only:</p>
     <ul>
       <li><b>Folder grants.</b> When you pick a folder in Chrome's folder dialog so Retouch can save into it, Chrome hands the extension a handle for that folder. Retouch stores the handle, the folder's name, the path prefix under which it found your file, and the time you added it. This is what lets the next Save happen without another dialog. Chrome still asks you to confirm the grant once after each restart.</li>
       <li><b>Version history.</b> Each time you press Save, Retouch first keeps a copy of the file as it was on disk, so "Undo" and History can put it back. It keeps the newest 20 versions of each file, and drops the oldest when one file's versions pass 25&nbsp;MB. Only files you saved with Retouch get history.</li>
+      <li><b>How far you have got.</b> One word: whether you have switched on file access, opened a page in Retouch, or saved one. It is used only for the page Chrome opens if you remove Retouch (see below).</li>
       <li><b>Notes for your AI.</b> Requests you pin in Prompt mode (your note, the quoted text of the element and where it sits in the file) are kept per file until you clear them, so they survive closing the tab.</li>
     </ul>
     <p>That is the whole list. Retouch keeps no list of the files you open, no settings that describe you and no identifiers, and none of this ever leaves your computer. Uninstalling the extension deletes all of it. You can also revoke a folder at any time from Chrome's site settings for the extension.</p>
@@ -114,7 +115,8 @@
       <li>Load code from the internet. Everything Retouch runs ships inside the extension package and is open source.</li>
       <li>Sell, share or transfer data about you to anyone, for any purpose. It has none.</li>
     </ul>
-    <p>The only network activity connected to Retouch is Chrome's own: the Chrome Web Store keeps the extension updated, under Google's privacy policy, and the links on the tour open fastretouch.com or GitHub in a normal tab when you click them.</p>
+    <p>The only network activity connected to Retouch is Chrome's own: the Chrome Web Store keeps the extension updated, under Google's privacy policy, and the links on the tour open fastretouch.com or GitHub in a normal tab when you click them. After your third save, the editor may offer two links (and at most once more, later): one to review Retouch on the Chrome Web Store and one to post about it on X. They open in a normal tab only if you click them, and the suggested post carries nothing from your page.</p>
+    <p>If you remove Retouch, Chrome opens one page on fastretouch.com asking what stopped you. Its address carries the Retouch version and that one word about how far you got, nothing else. GitHub, which hosts the site, sees the page request like any other visit; we keep no analytics, so the answer reaches us only if you choose to send the email the page prepares, and the page shows you everything the email will say before you send it.</p>
   </section>
 
   <section class="body" id="contact">

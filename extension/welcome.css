@@ -470,6 +470,20 @@ body.web .ext-only { display: none !important; }
   font-weight: 500;
 }
 
+/* The uninstall page (D51), said up front as the privacy page promises */
+.leaving-note {
+  width: 100%;
+  max-width: 1140px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+  color: var(--secondary);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.leaving-note a { color: var(--secondary); }
+.leaving-note a:hover { color: var(--fg); }
+
 .footer-left {
   display: flex;
   align-items: center;
@@ -509,6 +523,7 @@ body.web .ext-only { display: none !important; }
     gap: 12px;
     text-align: center;
   }
+  .leaving-note { text-align: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

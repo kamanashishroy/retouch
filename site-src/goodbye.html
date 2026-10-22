@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex">
+<title>Before you go · Retouch</title>
+<meta name="description" content="One question for people who removed Retouch: what stopped you?">
+<meta name="theme-color" content="#f3efe6">
+<link rel="canonical" href="https://fastretouch.com/goodbye.html">
+<link rel="icon" href="icons/32.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/128.png">
+<link rel="stylesheet" href="homepage.css">
+<link rel="stylesheet" href="page.css">
+<style>
+  /* Chrome opens this page when someone removes Retouch (D51). It sends nothing: the answer goes out
+     only as an email the visitor reads and sends, or copies. */
+  .ask { max-width: 680px; margin: 0 0 72px; }
+  .ask fieldset { border: 0; margin: 0 0 22px; padding: 0; }
+  .ask legend { padding: 0; margin: 0 0 12px; font-weight: 700; font-size: 19px; }
+  .choice {
+    display: flex; gap: 12px; align-items: flex-start; margin: 0 0 8px; padding: 14px 16px; cursor: pointer;
+    border: 1px solid var(--border-strong); border-radius: 14px; background: #fff8;
+    transition: border-color .18s var(--ease), background .18s var(--ease);
+  }
+  .choice:hover { border-color: var(--ink); }
+  .choice:has(input:checked) { border-color: var(--ink); background: var(--gold-tint-strong); }
+  .choice input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--red); flex-shrink: 0; }
+  .choice span { font-size: 17px; line-height: 1.45; }
+  .choice small { display: block; color: var(--ink-faint); font-size: 15px; }
+  .help { margin: -2px 0 10px 46px; font-size: 15px; color: var(--ink-muted); }
+  .help[hidden] { display: none; }
+  .ask label.comment { display: block; margin: 0 0 8px; font-weight: 700; font-size: 17px; }
+  .ask textarea {
+    box-sizing: border-box; width: 100%; min-height: 110px; padding: 12px 14px; resize: vertical;
+    font: inherit; font-size: 17px; line-height: 1.5; color: var(--ink);
+    border: 1px solid var(--border-strong); border-radius: 14px; background: #fff8;
+  }
+  .ask textarea:focus, .choice:has(input:focus-visible) { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .context { margin: 14px 0 22px; font-size: 15px; color: var(--ink-faint); }
+  .context[hidden] { display: none; }
+  .send-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .send-row button { font: inherit; cursor: pointer; }
+  .state { margin: 14px 0 0; min-height: 1.5em; font-size: 16px; color: var(--ink-muted); }
+  .state.warn { color: var(--red); }
+  .after { margin: 0 0 8px; font-size: 17px; color: var(--ink-muted); }
+  .ask a, .after a { color: var(--ink); text-decoration-color: var(--red); text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+  <header class="site-header on-page">
+    <div class="header-wrap">
+      <a class="brand" href="/" aria-label="fastretouch home">
+        <img src="brand/mark.svg" alt="" class="mark" width="28" height="29">
+        <span class="lockup"><span class="fast">fast</span><span class="retouch">retouch</span></span>
+      </a>
+    </div>
+  </header>
+
+<main class="page wrap" id="main">
+  <section class="page-hero">
+    <p class="eyebrow">Retouch is removed</p>
+    <h1 class="giant"><span class="word">One question,</span><br><span class="word thin">then you're done.</span></h1>
+    <p class="lede">Retouch is made by one person, and most people who try it leave without saying why. If you tell me what stopped you, the next version can fix it. Nothing is sent unless you send the email yourself.</p>
+  </section>
+
+  <form class="ask" id="ask" novalidate>
+    <fieldset>
+      <legend>What stopped you?</legend>
+      <label class="choice"><input type="checkbox" name="why" value="Setting it up was too much (file access, restarting Chrome)" data-help="setup"><span>Setting it up was too much<small>Switching on file access, restarting Chrome</small></span></label>
+      <p class="help" id="help-setup" hidden>Fair. That's the part being cut down next. If you'd like another go, <a href="/#setup">the steps are here</a> and take about a minute.</p>
+      <label class="choice"><input type="checkbox" name="why" value="It didn't work on my page"><span>It didn't work on my page<small>It wouldn't open, edit or save it</small></span></label>
+      <label class="choice"><input type="checkbox" name="why" value="It couldn't make the change I wanted"><span>It couldn't make the change I wanted</span></label>
+      <label class="choice"><input type="checkbox" name="why" value="I only wanted to try it"><span>I only wanted to try it</span></label>
+    </fieldset>
+
+    <label class="comment" for="comment">Anything else? <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+    <textarea id="comment" name="comment" maxlength="1000" placeholder="What were you trying to do?"></textarea>
+
+    <p class="context" id="context" hidden></p>
+
+    <div class="send-row">
+      <button type="submit" class="btn primary" id="send">Send by email</button>
+      <button type="button" class="btn secondary" id="copy">Copy answer</button>
+    </div>
+    <p class="state" id="state" role="status" aria-live="polite"></p>
+  </form>
+
+  <p class="after">Or write to <a href="mailto:hello@fastretouch.com">hello@fastretouch.com</a> in your own words. Changed your mind? <a href="https://chromewebstore.google.com/detail/retouch-fix-the-html-your/ckcjhaefngkggppffpbhmokbopcaloeh" target="_blank" rel="noopener">Add Retouch again</a>.</p>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-wrap wrap">
+    <div class="footer-brand">
+      <img src="brand/mark.svg" alt="" class="mark" width="24" height="25">
+      <span class="lockup"><span class="fast">fast</span><span class="retouch">retouch</span></span>
+    </div>
+    <nav class="footer-nav" aria-label="Footer navigation">
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/kamanashishroy/retouch" target="_blank" rel="noopener">Source</a>
+    </nav>
+    <p class="footer-credit">Made by <a href="about.html">Kamanashish Roy</a></p>
+  </div>
+</footer>
+<script>
+(() => {
+  // The extension's uninstall URL carries the version and how far the user got (D51). Both are checked
+  // against what they can be, shown to the visitor, and only ever leave in the email they send.
+  const params = new URLSearchParams(location.search);
+  const v = /^\d+(\.\d+){0,3}$/.test(params.get('v') || '') ? params.get('v') : '';
+  const REACHED = {
+    installed: 'installed it but never switched on file access',
+    access: 'switched on file access but never opened a page in Retouch',
+    opened: 'opened a page in Retouch but never saved',
+    saved: 'saved at least one page'
+  };
+  const reached = REACHED[params.get('reached')] || '';
+  const context = [v && `Retouch ${v}`, reached && `you ${reached}`].filter(Boolean).join(', ');
+
+  const form = document.getElementById('ask');
+  const comment = document.getElementById('comment');
+  const state = document.getElementById('state');
+  const contextEl = document.getElementById('context');
+  if (context) {
+    contextEl.textContent = `The email also says: ${context}. That's all it adds.`;
+    contextEl.hidden = false;
+  }
+  for (const box of form.querySelectorAll('input[data-help]')) {
+    box.addEventListener('change', () => { document.getElementById('help-' + box.dataset.help).hidden = !box.checked; });
+  }
+
+  function answer() {
+    const why = [...form.querySelectorAll('input[name="why"]:checked')].map((b) => `- ${b.value}`);
+    const text = comment.value.trim();
+    if (!why.length && !text) return '';
+    const lines = [];
+    if (why.length) lines.push('What stopped me:', ...why, '');
+    if (text) lines.push('Anything else:', text, '');
+    if (context) lines.push(`(${context.replace(/\byou\b/, 'I')})`);
+    return lines.join('\n').trim();
+  }
+  form.addEventListener('input', () => {
+    if (state.classList.contains('warn')) { state.textContent = ''; state.className = 'state'; }
+  });
+  function needAnswer() {
+    state.textContent = 'Tick a box or write a line first.';
+    state.className = 'state warn';
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const body = answer();
+    if (!body) return needAnswer();
+    location.href = `mailto:hello@fastretouch.com?subject=${encodeURIComponent('Why I removed Retouch')}&body=${encodeURIComponent(body)}`;
+    state.textContent = 'Your email app should open with this filled in. If nothing happened, use Copy answer and paste it into an email to hello@fastretouch.com.';
+    state.className = 'state';
+  });
+  document.getElementById('copy').addEventListener('click', async () => {
+    const body = answer();
+    if (!body) return needAnswer();
+    try {
+      await navigator.clipboard.writeText(body);
+      state.textContent = 'Copied. Paste it into an email to hello@fastretouch.com. Thank you.';
+      state.className = 'state';
+    } catch (err) {
+      state.textContent = 'Copying was blocked. Select your answer above and write to hello@fastretouch.com.';
+      state.className = 'state warn';
+    }
+  });
+})();
+</script>
+</body>
+</html>

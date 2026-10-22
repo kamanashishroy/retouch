@@ -361,6 +361,25 @@ body::before {
 #error { position: relative; z-index: 1; padding: 24px; font-size: 16px; max-width: 560px; margin: 120px auto; line-height: 1.5; }
 #error code { background: var(--glass); padding: 2px 8px; border-radius: 8px; font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 13px; }
 
+/* Review / share card after the third save: bottom right, over the page, never over the toolbar */
+.share {
+  position: absolute; z-index: 4; right: 24px; bottom: 24px; width: min(360px, calc(100vw - 48px)); box-sizing: border-box;
+  padding: 16px 16px 14px; border-radius: 22px; color: var(--fg); background: var(--banner); border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .28);
+  animation: share-in .45s var(--spring);
+}
+.share::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--tint); opacity: .35; pointer-events: none; }
+.share > * { position: relative; }
+.share[hidden] { display: none; }
+.share-title { margin: 0 32px 4px 0; font-weight: 700; font-size: 15px; }
+.share-text { margin: 0 0 14px; font-size: 13px; line-height: 1.45; color: var(--secondary); }
+.share-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-actions a.btn { display: inline-flex; align-items: center; box-sizing: border-box; text-decoration: none; }
+.share-actions .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(244, 192, 95, .7); }
+.share .banner-close { position: absolute; }
+@keyframes share-in { from { opacity: 0; transform: translateY(12px) scale(.96); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
